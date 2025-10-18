@@ -2,7 +2,11 @@
 
 This repository contains a Python script that demonstrates Anthropic's Computer Use capabilities, modified to run on MacOS without requiring a Docker container. The script allows Claude 3.5 Sonnet to perform tasks on your Mac by simulating mouse and keyboard actions as well as running bash command.
 
-**NEW:** Now includes voice control! Use OpenAI Whisper to control Claude with your voice by saying "Claude" followed by your command.
+**NEW Features:**
+
+- 🎤 **Voice Control**: Use OpenAI Whisper to control Claude with your voice by saying "Claude" followed by your command
+- 📱 **AppleScript Automation**: Claude can now send iMessages, control macOS apps, and automate your system using AppleScript
+- 🎨 **Overlay App**: Real-time transparent overlay showing Claude's activity using Electron + React
 
 Forked from Anthropic's [computer use demo](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) - optimized for MacOS.
 View Anthropic's docs [here](https://docs.anthropic.com/en/docs/build-with-claude/computer-use).
@@ -42,29 +46,52 @@ View Anthropic's docs [here](https://docs.anthropic.com/en/docs/build-with-claud
 
    The script uses `pyautogui` to control mouse and keyboard events. On MacOS, you need to grant accessibility permissions. These popups should show automatically the first time you run the script so you can skip this step. But to manually provide permissions:
 
-   - Go to **System Preferences** > **Security & Privacy** > **Privacy** tab.
+   - Go to **System Settings** > **Privacy & Security** > **Privacy** tab.
    - Select **Accessibility** from the list on the left.
    - Add your terminal application or Python interpreter to the list of allowed apps.
 
+   For AppleScript automation (iMessage, Notes, etc.):
+
+   - Go to **System Settings** > **Privacy & Security** > **Automation**.
+   - Enable permissions for Terminal/Python to control Messages and other apps.
+
 ## Usage
 
-### Option 1: Voice Control (NEW!)
+### Option 1: Voice Control with Overlay (NEW!)
 
-Run the voice-controlled version that listens for the wake word "Claude":
+Run the overlay-enabled version that listens for the wake word "Claude" and displays activity:
+
+**Terminal 1 - Start backend:**
+```bash
+python3.12 overlay_main.py
+```
+
+**Terminal 2 - Start overlay (requires Node.js):**
+```bash
+cd electron-overlay
+npm install  # First time only
+npm start
+```
+
+A transparent overlay will appear in the top-right corner showing real-time activity. Then simply speak your commands:
+
+- "Claude, save an image of a cat to the desktop"
+- "Claude, open Safari and look up Anthropic"
+- "Claude, create a new text file called notes.txt"
+- "Claude, send an iMessage to John saying hello"
+- "Claude, create a note about my meeting tomorrow"
+
+Press `Ctrl+C` in both terminals to stop.
+
+### Option 2: Voice Control (No Overlay)
+
+Run the voice-controlled version without the overlay:
 
 ```bash
 python3.12 voice_main.py
 ```
 
-Then simply speak your commands:
-
-- "Claude, save an image of a cat to the desktop"
-- "Claude, open Safari and look up Anthropic"
-- "Claude, create a new text file called notes.txt"
-
-The system will continuously listen for commands. Press `Ctrl+C` to stop.
-
-### Option 2: Command Line
+### Option 3: Command Line
 
 You can run the script by passing the instruction directly via the command line:
 
@@ -75,6 +102,36 @@ python3.12 main.py 'Open Safari and look up Anthropic'
 Replace `'Open Safari and look up Anthropic'` with your desired instruction.
 
 **Note:** If you do not provide an instruction via the command line, the script will use the default instruction specified in `main.py`.
+
+## Features
+
+### 🎨 Overlay App
+
+A transparent Electron overlay that displays real-time Claude activity:
+
+- **Glassmorphism Design**: Beautiful transparent window with backdrop blur
+- **Click-through**: Mouse events pass through to apps below
+- **Always On Top**: Stays visible while Claude works
+- **Real-time Updates**: Shows instructions, thoughts, tool outputs, and screenshots
+- **WebSocket Connection**: Live feed from Python backend
+
+See [electron-overlay/README.md](electron-overlay/README.md) for overlay documentation.
+
+### 🎤 Voice Control
+
+See [VOICE_CONTROL_GUIDE.md](VOICE_CONTROL_GUIDE.md) for detailed voice control documentation.
+
+### 📱 AppleScript Automation
+
+Claude can now control macOS applications using AppleScript:
+
+- **Send iMessages**: "Send a message to Alice saying hello"
+- **Control Notes**: "Create a new note titled 'Ideas'"
+- **Manage Calendar**: "Add a meeting to my calendar for tomorrow"
+- **Automate Safari**: "Open Safari and search for recipes"
+- **And much more!**
+
+See [APPLESCRIPT_GUIDE.md](APPLESCRIPT_GUIDE.md) for comprehensive AppleScript documentation and examples.
 
 ## Exiting the Script
 
