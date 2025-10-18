@@ -71,20 +71,60 @@ class AppleScriptTool(BaseAnthropicTool):
         if not message:
             return ToolResult(error="Message text is required for send_imessage")
 
-        # Build the AppleScript command
-        # Escape single quotes in the message and contact
-        escaped_message = message.replace("'", "'\"'\"'")
-        escaped_contact = contact.replace("'", "'\"'\"'")
-        
-        applescript = f"""
-tell application "Messages"
-    set targetService to 1st account whose service type = iMessage
-    set targetBuddy to participant "{escaped_contact}" of targetService
-    send "{escaped_message}" to targetBuddy
-end tell
-"""
-        
         print(f"Sending iMessage to '{contact}': {message}")
+        
+        # First, try to resolve the contact name to a phone/email from Contacts app
+        # Check if contact looks like a phone number or email (skip lookup)
+        if contact.startswith('+') or '@' in contact or contact.replace('-','').replace(' ','').isdigit():
+            # It's already a phone number or email
+            target_id = contact
+            print(f"Using direct identifier: {target_id}")
+        else:
+            # Try to look up the contact in Contacts app
+            print(f"Looking up contact '{contact}' in Contacts app...")
+            lookup_result = await self._lookup_contact(contact)
+            if lookup_result.error:
+                return ToolResult(
+                    error=f"Could not find contact '{contact}': {lookup_result.error}. Try using a phone number like +1234567890 or email address instead.",
+                    output=lookup_result.output
+                )
+            target_id = lookup_result.output.strip() if lookup_result.output else contact
+            print(f"Resolved to: {target_id}")
+        
+        # Clean up phone number formatting - remove parentheses, hyphens, spaces
+        # Messages needs clean numbers with country code like +14155551234
+        if target_id and not '@' in target_id:
+            # It's a phone number, clean it up
+            cleaned = target_id.replace('(', '').replace(')', '').replace('-', '').replace(' ', '')
+            
+            # Ensure it has a country code (add +1 for US if missing)
+            if not cleaned.startswith('+'):
+                # If it's a 10-digit number, add +1 for US
+                if len(cleaned) == 10 and cleaned.isdigit():
+                    cleaned = '+1' + cleaned
+                    print(f"Added country code: {target_id} → {cleaned}")
+                # If it's 11 digits starting with 1, add +
+                elif len(cleaned) == 11 and cleaned.startswith('1') and cleaned.isdigit():
+                    cleaned = '+' + cleaned
+                    print(f"Added + prefix: {target_id} → {cleaned}")
+                else:
+                    print(f"Cleaned phone number: {target_id} → {cleaned}")
+            else:
+                if cleaned != target_id:
+                    print(f"Cleaned phone number: {target_id} → {cleaned}")
+            
+            target_id = cleaned
+        
+        # Escape quotes and backslashes for AppleScript strings
+        # AppleScript uses backslash escaping inside quoted strings
+        escaped_message = message.replace('\\', '\\\\').replace('"', '\\"')
+        escaped_target = target_id.replace('\\', '\\\\').replace('"', '\\"')
+        
+        # Build AppleScript - using double quotes with backslash escaping
+        applescript = f'tell application "Messages" to send "{escaped_message}" to buddy "{escaped_target}"'
+        
+        # Print the exact AppleScript command for debugging
+        print(f"Exact AppleScript command: {applescript}")
         
         try:
             # Execute the AppleScript
@@ -101,6 +141,47 @@ end tell
             )
         except Exception as e:
             return ToolResult(error=f"Error sending iMessage: {str(e)}")
+    
+    async def _lookup_contact(self, name: str) -> CLIResult:
+        """
+        Look up a contact in the Contacts app and return their phone number or email.
+        
+        Args:
+            name: Contact name to search for
+        
+        Returns:
+            CLIResult with phone/email or error
+        """
+        # Escape the name for AppleScript
+        escaped_name = name.replace('\\', '\\\\').replace('"', '\\"')
+        
+        # Try to find the contact and get their primary phone or email
+        applescript = f'''
+tell application "Contacts"
+    set matchingPeople to people whose name contains "{escaped_name}"
+    if (count of matchingPeople) is 0 then
+        error "No contact found with name containing '{escaped_name}'"
+    end if
+    
+    set thePerson to item 1 of matchingPeople
+    
+    -- Try to get phone number first
+    if (count of phones of thePerson) > 0 then
+        set thePhone to value of first phone of thePerson
+        return thePhone
+    else if (count of emails of thePerson) > 0 then
+        set theEmail to value of first email of thePerson
+        return theEmail
+    else
+        error "Contact found but has no phone number or email address"
+    end if
+end tell
+'''
+        
+        try:
+            return await self._run_osascript(applescript)
+        except Exception as e:
+            return CLIResult(output="", error=str(e))
 
     async def _execute_script(self, script: str | None) -> ToolResult:
         """

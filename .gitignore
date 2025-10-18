@@ -30,3 +30,8 @@ screenshots/
 
 # macOS Trash folder
 .Trash/
+
+# Electron overlay
+electron-overlay/node_modules/
+electron-overlay/dist/
+electron-overlay/.vite/
