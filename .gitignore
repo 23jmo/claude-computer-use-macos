@@ -17,6 +17,8 @@ venv/
 .tox/
 build/
 dist/
+.env
+screenshots/
 
 # IDE/Editor files
 .idea/
