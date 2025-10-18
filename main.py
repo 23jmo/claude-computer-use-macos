@@ -9,11 +9,12 @@ from computer_use_demo.tools import ToolResult
 from anthropic.types.beta import BetaMessage, BetaMessageParam
 from anthropic import APIResponse
 from computer_use_demo.websocket_server import broadcast_event
+from computer_use_demo.tts import get_tts_manager
 
 dotenv.load_dotenv()
 
 
-async def run_computer_use(instruction: str, api_key: str, provider: APIProvider = APIProvider.ANTHROPIC, enable_websocket: bool = False):
+async def run_computer_use(instruction: str, api_key: str, provider: APIProvider = APIProvider.ANTHROPIC, enable_websocket: bool = False, tts_manager=None):
     """
     Run Claude computer use with the given instruction.
     This is the core function that can be called from voice control or CLI.
@@ -23,6 +24,7 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
         api_key: Anthropic API key
         provider: API provider (default: ANTHROPIC)
         enable_websocket: If True, broadcast events to WebSocket clients
+        tts_manager: Optional TTS manager for text-to-speech output
     
     Returns:
         List of messages from the conversation
@@ -30,6 +32,7 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
     print(
         f"Starting Claude 'Computer Use'.\nPress ctrl+c to stop.\nInstructions provided: '{instruction}'"
     )
+    print(f"[DEBUG] TTS manager status: {'AVAILABLE' if tts_manager else 'NOT AVAILABLE'}")
 
     # Broadcast initial instruction to WebSocket clients
     if enable_websocket:
@@ -48,15 +51,53 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
 
     # Define callbacks (you can customize these)
     def output_callback(content_block):
-        if isinstance(content_block, dict) and content_block.get("type") == "text":
-            print("Assistant:", content_block.get("text"))
+        print(f"[DEBUG] output_callback called with: {type(content_block)}")
+        
+        # Handle BetaTextBlock objects (Anthropic's text blocks)
+        if hasattr(content_block, 'type') and content_block.type == "text":
+            text_content = content_block.text
+            print("Assistant:", text_content)
             
             # Broadcast assistant message to WebSocket clients
             if enable_websocket:
                 asyncio.create_task(broadcast_event({
                     "type": "assistant_message",
-                    "text": content_block.get("text")
+                    "text": text_content
                 }))
+            
+            # Speak the assistant message if TTS manager is available
+            if tts_manager and text_content:
+                print(f"[TTS] Speaking: {text_content[:50]}...")
+                # Call synchronous speak method directly
+                tts_manager.speak(text_content)
+                print("[TTS] TTS call completed")
+            elif not tts_manager:
+                print("[TTS] No TTS manager available")
+            elif not text_content:
+                print("[TTS] No text content to speak")
+        
+        # Fallback for dictionary format (if needed)
+        elif isinstance(content_block, dict) and content_block.get("type") == "text":
+            text_content = content_block.get("text")
+            print("Assistant:", text_content)
+            
+            # Broadcast assistant message to WebSocket clients
+            if enable_websocket:
+                asyncio.create_task(broadcast_event({
+                    "type": "assistant_message",
+                    "text": text_content
+                }))
+            
+            # Speak the assistant message if TTS manager is available
+            if tts_manager and text_content:
+                print(f"[TTS] Speaking: {text_content[:50]}...")
+                # Call synchronous speak method directly
+                tts_manager.speak(text_content)
+                print("[TTS] TTS call completed")
+            elif not tts_manager:
+                print("[TTS] No TTS manager available")
+            elif not text_content:
+                print("[TTS] No text content to speak")
 
     def tool_output_callback(result: ToolResult, tool_use_id: str):
         if result.output:
