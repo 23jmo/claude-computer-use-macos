@@ -39,6 +39,17 @@ class OrbyVoiceAssistant {
       ipcRenderer.on("cursor-move", (event, coordinates) => {
         this.moveCursorTo(coordinates);
       });
+
+      // Store IPC renderer for window control
+      this.ipcRenderer = ipcRenderer;
+    }
+  }
+
+  setWindowInteractive(interactive) {
+    // Enable or disable window interactivity
+    if (this.ipcRenderer) {
+      this.ipcRenderer.invoke("set-ignore-mouse-events", !interactive);
+      this.ipcRenderer.invoke("set-focusable", interactive);
     }
   }
 
@@ -182,15 +193,9 @@ class OrbyVoiceAssistant {
     if (logo) {
       console.log("Logo found, adding interaction listeners");
 
-      // Quick click detection
-      logo.addEventListener("click", (e) => {
-        e.preventDefault();
-        console.log("Quick click detected");
-        this.handleQuickClick();
-      });
-
-      // Long hover detection
+      // Enable mouse events when hovering over the Orby button
       logo.addEventListener("mouseenter", () => {
+        this.setWindowInteractive(true);
         this.hoverStartTime = Date.now();
         this.hoverTimer = setTimeout(() => {
           console.log("Long hover detected");
@@ -198,12 +203,24 @@ class OrbyVoiceAssistant {
         }, this.hoverThreshold);
       });
 
+      // Disable mouse events when leaving the Orby button
       logo.addEventListener("mouseleave", () => {
+        // Only disable if we're not showing the text input overlay
+        if (!document.querySelector(".text-input-overlay")) {
+          this.setWindowInteractive(false);
+        }
         if (this.hoverTimer) {
           clearTimeout(this.hoverTimer);
           this.hoverTimer = null;
         }
         this.hoverStartTime = null;
+      });
+
+      // Quick click detection
+      logo.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log("Quick click detected");
+        this.handleQuickClick();
       });
     } else {
       console.error("Logo element not found!");
@@ -230,6 +247,9 @@ class OrbyVoiceAssistant {
   }
 
   showTextInput() {
+    // Make window interactive to allow text input
+    this.setWindowInteractive(true);
+
     // Create text input overlay
     const inputOverlay = document.createElement("div");
     inputOverlay.className = "text-input-overlay";
@@ -241,13 +261,17 @@ class OrbyVoiceAssistant {
 
     document.body.appendChild(inputOverlay);
 
-    // Focus on input
-    const input = document.getElementById("manual-command");
-    input.focus();
+    // Focus on input after a short delay to ensure window is ready
+    setTimeout(() => {
+      const input = document.getElementById("manual-command");
+      if (input) {
+        input.focus();
+      }
+    }, 100);
 
     // Handle send
     document.getElementById("send-command").addEventListener("click", () => {
-      const command = input.value.trim();
+      const command = document.getElementById("manual-command").value.trim();
       if (command && this.ws && this.ws.readyState === WebSocket.OPEN) {
         this.ws.send(
           JSON.stringify({
@@ -258,11 +282,15 @@ class OrbyVoiceAssistant {
         this.setState("thinking");
       }
       document.body.removeChild(inputOverlay);
+      // Restore click-through behavior
+      this.setWindowInteractive(false);
     });
 
     // Handle cancel
     document.getElementById("cancel-command").addEventListener("click", () => {
       document.body.removeChild(inputOverlay);
+      // Restore click-through behavior
+      this.setWindowInteractive(false);
     });
 
     // Handle escape key
@@ -270,6 +298,8 @@ class OrbyVoiceAssistant {
       if (e.key === "Escape") {
         document.body.removeChild(inputOverlay);
         document.removeEventListener("keydown", handleKeyPress);
+        // Restore click-through behavior
+        this.setWindowInteractive(false);
       } else if (e.key === "Enter") {
         document.getElementById("send-command").click();
         document.removeEventListener("keydown", handleKeyPress);

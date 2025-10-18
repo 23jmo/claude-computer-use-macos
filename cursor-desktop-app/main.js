@@ -54,6 +54,19 @@ function createWindow() {
   // Make sure it stays on top
   mainWindow.setAlwaysOnTop(true, "screen-saver");
 
+  // Make the window click-through by default
+  mainWindow.setIgnoreMouseEvents(true);
+  mainWindow.setFocusable(false);
+
+  // Set up IPC to handle dynamic mouse event and focus control
+  ipcMain.handle("set-ignore-mouse-events", (event, ignore) => {
+    mainWindow.setIgnoreMouseEvents(ignore);
+  });
+
+  ipcMain.handle("set-focusable", (event, focusable) => {
+    mainWindow.setFocusable(focusable);
+  });
+
   // Ensure complete transparency
   mainWindow.setBackgroundColor("rgba(0,0,0,0)");
 

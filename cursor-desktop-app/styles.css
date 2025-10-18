@@ -16,8 +16,7 @@ body {
   padding: 0;
   border: none;
   outline: none;
-  -webkit-app-region: drag; /* Make the entire body draggable */
-  cursor: move; /* Show move cursor */
+  pointer-events: none; /* Make body click-through */
 }
 
 .container {
@@ -68,6 +67,7 @@ body {
   border: none;
   outline: none;
   -webkit-app-region: no-drag;
+  pointer-events: auto; /* Allow mouse events on the button */
 }
 
 .cursor-shape:hover {
@@ -365,6 +365,7 @@ body {
   gap: 10px;
   z-index: 1000;
   min-width: 300px;
+  pointer-events: auto; /* Allow mouse events on the overlay */
 }
 
 .text-input-overlay input {
