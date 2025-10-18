@@ -26,6 +26,7 @@ Action = Literal[
     "cursor_position",
 ]
 
+pyautogui.FAILSAFE = False
 
 class ScalingSource(StrEnum):
     COMPUTER = "computer"

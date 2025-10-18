@@ -2,6 +2,8 @@
 
 This repository contains a Python script that demonstrates Anthropic's Computer Use capabilities, modified to run on MacOS without requiring a Docker container. The script allows Claude 3.5 Sonnet to perform tasks on your Mac by simulating mouse and keyboard actions as well as running bash command.
 
+**NEW:** Now includes voice control! Use OpenAI Whisper to control Claude with your voice by saying "Claude" followed by your command.
+
 Forked from Anthropic's [computer use demo](https://github.com/anthropics/anthropic-quickstarts/tree/main/computer-use-demo) - optimized for MacOS.
 View Anthropic's docs [here](https://docs.anthropic.com/en/docs/build-with-claude/computer-use).
 
@@ -25,13 +27,16 @@ View Anthropic's docs [here](https://docs.anthropic.com/en/docs/build-with-claud
    pip3.12 install -r requirements.txt
    ```
 
-3. **Set your Anthropic API key as an environment variable:**
+3. **Set your API keys as environment variables:**
 
    ```bash
    export ANTHROPIC_API_KEY="CLAUDE_API_KEY"
+   export OPENAI_API_KEY="YOUR_OPENAI_KEY"  # Only needed for voice control
    ```
 
    Replace `CLAUDE_API_KEY` with your actual Anthropic API key. You find yours [here](https://console.anthropic.com/settings/keys).
+
+   For voice control, also set your OpenAI API key (get it [here](https://platform.openai.com/api-keys)).
 
 4. **Grant Accessibility Permissions:**
 
@@ -43,9 +48,25 @@ View Anthropic's docs [here](https://docs.anthropic.com/en/docs/build-with-claud
 
 ## Usage
 
-You can run the script by passing the instruction directly via the command line or by editing the `main.py` file.
+### Option 1: Voice Control (NEW!)
 
-**Example using command line instruction:**
+Run the voice-controlled version that listens for the wake word "Claude":
+
+```bash
+python3.12 voice_main.py
+```
+
+Then simply speak your commands:
+
+- "Claude, save an image of a cat to the desktop"
+- "Claude, open Safari and look up Anthropic"
+- "Claude, create a new text file called notes.txt"
+
+The system will continuously listen for commands. Press `Ctrl+C` to stop.
+
+### Option 2: Command Line
+
+You can run the script by passing the instruction directly via the command line:
 
 ```bash
 python3.12 main.py 'Open Safari and look up Anthropic'
@@ -53,7 +74,7 @@ python3.12 main.py 'Open Safari and look up Anthropic'
 
 Replace `'Open Safari and look up Anthropic'` with your desired instruction.
 
-**Note:** If you do not provide an instruction via the command line, the script will use the default instruction specified in `main.py`. You can edit `main.py` to change this default instruction.
+**Note:** If you do not provide an instruction via the command line, the script will use the default instruction specified in `main.py`.
 
 ## Exiting the Script
 
@@ -62,5 +83,6 @@ You can quit the script at any time by pressing `Ctrl+C` in the terminal.
 ## ⚠ Disclaimer
 
 > [!CAUTION]
+>
 > - **Security Risks:** This script allows claude to control your computer's mouse and keyboard and run bash commands. Use it at your own risk.
 > - **Responsibility:** By running this script, you assume all responsibility and liability for any results.
