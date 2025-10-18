@@ -3,9 +3,9 @@
  * Creates a frameless, transparent, always-on-top, click-through window
  */
 
-import { app, BrowserWindow, screen } from 'electron';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { app, BrowserWindow, screen } from "electron";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +16,8 @@ let mainWindow = null;
 function createWindow() {
   // Get primary display dimensions
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+  const { width: screenWidth, height: screenHeight } =
+    primaryDisplay.workAreaSize;
 
   // Window dimensions
   const windowWidth = 400;
@@ -45,60 +46,59 @@ function createWindow() {
     maximizable: false,
     closable: true,
     // macOS specific
-    titleBarStyle: 'customButtonsOnHover',
-    vibrancy: 'under-window',
-    visualEffectState: 'active',
+    titleBarStyle: "customButtonsOnHover",
+    vibrancy: "under-window",
+    visualEffectState: "active",
     // Web preferences
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
-    }
+      preload: path.join(__dirname, "preload.js"),
+    },
   });
 
   // Enable click-through (mouse events pass through)
   mainWindow.setIgnoreMouseEvents(true, { forward: true });
 
   // Load the app
-  const isDev = process.env.NODE_ENV === 'development';
-  
+  const isDev = process.env.NODE_ENV === "development";
+
   if (isDev) {
     // Development: Load from Vite dev server
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL("http://localhost:5173");
     // Open DevTools in development
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
+    mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
     // Production: Load from built files
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 
   // Handle window closed
-  mainWindow.on('closed', () => {
+  mainWindow.on("closed", () => {
     mainWindow = null;
   });
 
-  console.log('[Electron] Overlay window created');
+  console.log("[Electron] Overlay window created");
 }
 
 // App lifecycle
 app.whenReady().then(() => {
   createWindow();
 
-  app.on('activate', () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
 // Handle errors
-process.on('uncaughtException', (error) => {
-  console.error('[Electron] Uncaught exception:', error);
+process.on("uncaughtException", (error) => {
+  console.error("[Electron] Uncaught exception:", error);
 });
-

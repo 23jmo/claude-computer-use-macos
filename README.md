@@ -62,11 +62,13 @@ View Anthropic's docs [here](https://docs.anthropic.com/en/docs/build-with-claud
 Run the overlay-enabled version that listens for the wake word "Claude" and displays activity:
 
 **Terminal 1 - Start backend:**
+
 ```bash
 python3.12 overlay_main.py
 ```
 
 **Terminal 2 - Start overlay (requires Node.js):**
+
 ```bash
 cd electron-overlay
 npm install  # First time only
