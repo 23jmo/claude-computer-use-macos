@@ -35,3 +35,6 @@ screenshots/
 electron-overlay/node_modules/
 electron-overlay/dist/
 electron-overlay/.vite/
+
+
+.env
