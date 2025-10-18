@@ -1,0 +1,237 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: transparent !important; /* Completely transparent background */
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    -webkit-app-region: drag; /* Make the entire body draggable */
+    cursor: move; /* Show move cursor */
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    background: transparent !important; /* Completely transparent background */
+    border: none;
+    outline: none;
+}
+
+.cursor-graphic {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.listening-text {
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.listening-text.show {
+    opacity: 1;
+}
+
+.cursor-shape {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #00d4aa, #00b894);
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(110deg);
+    position: relative;
+    box-shadow: 
+        0 0 40px rgba(0, 212, 170, 0.8),
+        0 0 80px rgba(0, 212, 170, 0.6),
+        0 0 120px rgba(0, 212, 170, 0.4),
+        0 0 160px rgba(0, 212, 170, 0.2);
+    animation: glow 2s ease-in-out infinite alternate;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    -webkit-app-region: no-drag;
+}
+
+.cursor-shape:hover {
+    transform: rotate(110deg) scale(1.05);
+    box-shadow: 
+        0 0 50px rgba(0, 212, 170, 1.0),
+        0 0 100px rgba(0, 212, 170, 0.8),
+        0 0 150px rgba(0, 212, 170, 0.6),
+        0 0 200px rgba(0, 212, 170, 0.4);
+}
+
+.cursor-shape:active {
+    transform: rotate(110deg) scale(0.95);
+    box-shadow: 
+        0 0 30px rgba(0, 212, 170, 0.9),
+        0 0 60px rgba(0, 212, 170, 0.7),
+        0 0 90px rgba(0, 212, 170, 0.5),
+        0 0 120px rgba(0, 212, 170, 0.3);
+}
+
+.cursor-shape.listening {
+    width: 200px;
+    height: 40px;
+    background: black;
+    border-radius: 20px;
+    transform: rotate(0deg);
+    border: 3px solid;
+    border-image: linear-gradient(90deg, #8B5CF6, #3B82F6, #06B6D4, #EAB308, #F97316) 1;
+    animation: listeningGlow 2s ease-in-out infinite;
+    position: relative;
+}
+
+.cursor-shape.listening::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 12px solid #8B5CF6;
+    transform: rotate(-45deg);
+}
+
+.cursor-shape.listening .inner-circle {
+    display: none;
+}
+
+.inner-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-110deg);
+    width: 30px;
+    height: 30px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 
+        0 0 30px rgba(255, 255, 255, 0.9),
+        0 0 60px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes glow {
+    0% {
+        box-shadow: 
+            0 0 40px rgba(0, 212, 170, 0.8),
+            0 0 80px rgba(0, 212, 170, 0.6),
+            0 0 120px rgba(0, 212, 170, 0.4),
+            0 0 160px rgba(0, 212, 170, 0.2);
+    }
+    100% {
+        box-shadow: 
+            0 0 60px rgba(0, 212, 170, 1.0),
+            0 0 120px rgba(0, 212, 170, 0.8),
+            0 0 180px rgba(0, 212, 170, 0.6),
+            0 0 240px rgba(0, 212, 170, 0.4);
+    }
+}
+
+/* Subtle fade-in animation */
+.container {
+    animation: fadeIn 1s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes listeningPulse {
+    0% {
+        transform: rotate(110deg) scale(1);
+        box-shadow: 
+            0 0 40px rgba(0, 212, 170, 0.8),
+            0 0 80px rgba(0, 212, 170, 0.6),
+            0 0 120px rgba(0, 212, 170, 0.4),
+            0 0 160px rgba(0, 212, 170, 0.2);
+    }
+    50% {
+        transform: rotate(110deg) scale(1.1);
+        box-shadow: 
+            0 0 60px rgba(0, 212, 170, 1.0),
+            0 0 120px rgba(0, 212, 170, 0.8),
+            0 0 180px rgba(0, 212, 170, 0.6),
+            0 0 240px rgba(0, 212, 170, 0.4);
+    }
+    100% {
+        transform: rotate(110deg) scale(1);
+        box-shadow: 
+            0 0 40px rgba(0, 212, 170, 0.8),
+            0 0 80px rgba(0, 212, 170, 0.6),
+            0 0 120px rgba(0, 212, 170, 0.4),
+            0 0 160px rgba(0, 212, 170, 0.2);
+    }
+}
+
+@keyframes listeningGlow {
+    0% {
+        box-shadow: 
+            0 0 30px rgba(255, 255, 255, 0.9),
+            0 0 60px rgba(255, 255, 255, 0.6);
+    }
+    50% {
+        box-shadow: 
+            0 0 50px rgba(255, 255, 255, 1.0),
+            0 0 100px rgba(255, 255, 255, 0.8),
+            0 0 150px rgba(255, 255, 255, 0.6);
+    }
+    100% {
+        box-shadow: 
+            0 0 30px rgba(255, 255, 255, 0.9),
+            0 0 60px rgba(255, 255, 255, 0.6);
+    }
+}
+
+.orby-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    z-index: 1000;
+    animation: notificationFade 3s ease-in-out;
+    pointer-events: none;
+}
+
+@keyframes notificationFade {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
