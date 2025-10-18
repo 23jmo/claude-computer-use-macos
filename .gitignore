@@ -34,4 +34,7 @@ screenshots/
 # Electron overlay
 electron-overlay/node_modules/
 electron-overlay/dist/
+
 electron-overlay/.vite/
+
+
