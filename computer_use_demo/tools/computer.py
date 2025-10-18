@@ -8,6 +8,14 @@ from anthropic.types.beta import BetaToolComputerUse20241022Param
 
 from .base import BaseAnthropicTool, ToolError, ToolResult
 
+# Import broadcast_event for WebSocket communication
+try:
+    from ..websocket_server import broadcast_event
+    BROADCAST_AVAILABLE = True
+except ImportError:
+    BROADCAST_AVAILABLE = False
+    print("[ComputerTool] WebSocket broadcast not available")
+
 OUTPUT_DIR = "/tmp/outputs"
 
 TYPING_DELAY_MS = 12
@@ -87,6 +95,29 @@ class ComputerTool(BaseAnthropicTool):
             self.target_width = self.width
             self.target_height = self.height
 
+    async def _broadcast_cursor_action(self, action: str, coordinates: tuple[int, int] = None, text: str = None):
+        """Broadcast cursor action to WebSocket clients."""
+        if not BROADCAST_AVAILABLE:
+            return
+            
+        try:
+            event_data = {
+                "type": "cursor_action",
+                "action": action,
+                "timestamp": asyncio.get_event_loop().time()
+            }
+            
+            if coordinates:
+                event_data["coordinates"] = {"x": coordinates[0], "y": coordinates[1]}
+            
+            if text:
+                event_data["text"] = text
+                
+            # Create task to broadcast without blocking
+            asyncio.create_task(broadcast_event(event_data))
+        except Exception as e:
+            print(f"[ComputerTool] Error broadcasting cursor action: {e}")
+
     async def __call__(
         self,
         *,
@@ -114,11 +145,15 @@ class ComputerTool(BaseAnthropicTool):
 
             if action == "mouse_move":
                 await asyncio.to_thread(pyautogui.moveTo, x, y)
+                # Broadcast cursor movement
+                await self._broadcast_cursor_action("mouse_move", (x, y))
                 return ToolResult(output=f"Mouse moved successfully to X={x}, Y={y}")
             elif action == "left_click_drag":
                 await asyncio.to_thread(pyautogui.mouseDown)
                 await asyncio.to_thread(pyautogui.moveTo, x, y)
                 await asyncio.to_thread(pyautogui.mouseUp)
+                # Broadcast drag action
+                await self._broadcast_cursor_action("drag", (x, y))
                 return ToolResult(output="Mouse drag action completed.")
 
         if action in ("key", "type"):
@@ -166,6 +201,8 @@ class ComputerTool(BaseAnthropicTool):
                 await asyncio.to_thread(
                     pyautogui.write, text, interval=TYPING_DELAY_MS / 1000.0
                 )
+                # Broadcast typing action
+                await self._broadcast_cursor_action("type", text=text)
                 return ToolResult(output=f"Typed text: {text}")
 
         if action in (
@@ -189,12 +226,18 @@ class ComputerTool(BaseAnthropicTool):
             else:
                 if action == "left_click":
                     await asyncio.to_thread(pyautogui.click, button="left")
+                    # Broadcast click action
+                    await self._broadcast_cursor_action("click", text="left")
                     return ToolResult(output="Left click performed.")
                 elif action == "right_click":
                     await asyncio.to_thread(pyautogui.click, button="right")
+                    # Broadcast click action
+                    await self._broadcast_cursor_action("click", text="right")
                     return ToolResult(output="Right click performed.")
                 elif action == "double_click":
                     await asyncio.to_thread(pyautogui.doubleClick)
+                    # Broadcast click action
+                    await self._broadcast_cursor_action("click", text="double")
                     return ToolResult(output="Double click performed.")
 
         raise ToolError(f"Invalid action: {action}")

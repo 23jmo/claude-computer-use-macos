@@ -1,178 +1,315 @@
 class OrbyVoiceAssistant {
-    constructor() {
-        console.log('Orby Voice Assistant initializing...');
-        this.isListening = false;
-        this.mediaRecorder = null;
-        this.audioChunks = [];
-        this.backendUrl = 'http://localhost:8000/api/voice'; // Orby API server endpoint
-        
-        this.initializeEventListeners();
-        this.requestMicrophonePermission();
-        console.log('Orby Voice Assistant ready!');
-    }
+  constructor() {
+    console.log("Orby Voice Assistant initializing...");
 
-    initializeEventListeners() {
-        const logo = document.getElementById('orby-logo');
-        if (logo) {
-            console.log('Logo found, adding click listener');
-            logo.addEventListener('click', () => {
-                console.log('Orby button clicked!');
-                this.toggleListening();
-            });
-        } else {
-            console.error('Logo element not found!');
+    // WebSocket connection
+    this.ws = null;
+    this.wsUrl = "ws://localhost:8765";
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000;
+
+    // Cursor state machine
+    this.currentState = "idle"; // idle, listening, thinking, moving, clicking, typing, complete
+    this.stateHistory = [];
+
+    // Interaction tracking
+    this.hoverStartTime = null;
+    this.hoverThreshold = 1000; // 1 second for long hover
+    this.hoverTimer = null;
+
+    // Position tracking
+    this.currentPosition = { x: 0, y: 0 };
+    this.targetPosition = { x: 0, y: 0 };
+
+    this.initializeWebSocket();
+    this.initializeEventListeners();
+    this.initializeIPC();
+    console.log("Orby Voice Assistant ready!");
+  }
+
+  initializeWebSocket() {
+    this.connectWebSocket();
+  }
+
+  initializeIPC() {
+    // Listen for cursor move events from main process
+    if (typeof require !== "undefined") {
+      const { ipcRenderer } = require("electron");
+      ipcRenderer.on("cursor-move", (event, coordinates) => {
+        this.moveCursorTo(coordinates);
+      });
+    }
+  }
+
+  connectWebSocket() {
+    try {
+      this.ws = new WebSocket(this.wsUrl);
+
+      this.ws.onopen = () => {
+        console.log("WebSocket connected to backend");
+        this.reconnectAttempts = 0;
+        this.setState("idle");
+      };
+
+      this.ws.onmessage = (event) => {
+        this.handleWebSocketMessage(event.data);
+      };
+
+      this.ws.onclose = () => {
+        console.log("WebSocket disconnected");
+        this.setState("idle");
+        this.scheduleReconnect();
+      };
+
+      this.ws.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
+    } catch (error) {
+      console.error("Failed to connect WebSocket:", error);
+      this.scheduleReconnect();
+    }
+  }
+
+  scheduleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      console.log(
+        `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+      );
+      setTimeout(() => {
+        this.connectWebSocket();
+      }, this.reconnectDelay * this.reconnectAttempts);
+    } else {
+      console.error("Max reconnection attempts reached");
+    }
+  }
+
+  handleWebSocketMessage(data) {
+    try {
+      const message = JSON.parse(data);
+      console.log("WebSocket message:", message);
+
+      switch (message.type) {
+        case "connection":
+          console.log("Connected to backend:", message.message);
+          break;
+
+        case "instruction":
+          this.setState("thinking");
+          break;
+
+        case "assistant_message":
+          // Keep thinking state while processing
+          break;
+
+        case "tool_output":
+          if (
+            message.output.includes("click") ||
+            message.output.includes("Click")
+          ) {
+            this.setState("clicking");
+          } else if (
+            message.output.includes("type") ||
+            message.output.includes("Typed")
+          ) {
+            this.setState("typing");
+          } else if (
+            message.output.includes("move") ||
+            message.output.includes("Move")
+          ) {
+            this.setState("moving");
+          }
+          break;
+
+        case "cursor_action":
+          this.handleCursorAction(message);
+          break;
+
+        case "screenshot":
+          this.setState("thinking");
+          break;
+
+        case "tool_error":
+          console.error("Tool error:", message.error);
+          this.setState("idle");
+          break;
+      }
+    } catch (error) {
+      console.error("Error parsing WebSocket message:", error);
+    }
+  }
+
+  handleCursorAction(message) {
+    if (message.action === "mouse_move" && message.coordinates) {
+      this.targetPosition = message.coordinates;
+      this.setState("moving");
+      this.moveCursorTo(message.coordinates);
+    } else if (message.action === "click") {
+      this.setState("clicking");
+      setTimeout(() => this.setState("idle"), 500);
+    } else if (message.action === "type") {
+      this.setState("typing");
+      setTimeout(() => this.setState("idle"), 1000);
+    }
+  }
+
+  moveCursorTo(coordinates) {
+    const container = document.querySelector(".container");
+    if (container && coordinates) {
+      container.style.left = `${coordinates.x}px`;
+      container.style.top = `${coordinates.y}px`;
+      container.style.transform = "translate(-50%, -50%)";
+    }
+  }
+
+  setState(newState) {
+    if (this.currentState !== newState) {
+      console.log(`State transition: ${this.currentState} → ${newState}`);
+      this.stateHistory.push({
+        from: this.currentState,
+        to: newState,
+        timestamp: Date.now(),
+      });
+
+      this.currentState = newState;
+      this.updateVisualState();
+    }
+  }
+
+  initializeEventListeners() {
+    const logo = document.getElementById("orby-logo");
+    if (logo) {
+      console.log("Logo found, adding interaction listeners");
+
+      // Quick click detection
+      logo.addEventListener("click", (e) => {
+        e.preventDefault();
+        console.log("Quick click detected");
+        this.handleQuickClick();
+      });
+
+      // Long hover detection
+      logo.addEventListener("mouseenter", () => {
+        this.hoverStartTime = Date.now();
+        this.hoverTimer = setTimeout(() => {
+          console.log("Long hover detected");
+          this.handleLongHover();
+        }, this.hoverThreshold);
+      });
+
+      logo.addEventListener("mouseleave", () => {
+        if (this.hoverTimer) {
+          clearTimeout(this.hoverTimer);
+          this.hoverTimer = null;
         }
+        this.hoverStartTime = null;
+      });
+    } else {
+      console.error("Logo element not found!");
+    }
+  }
+
+  handleQuickClick() {
+    // Send trigger message to backend to start voice listening
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(
+        JSON.stringify({
+          type: "trigger_voice_listening",
+        })
+      );
+      this.setState("listening");
+    } else {
+      console.error("WebSocket not connected");
+    }
+  }
+
+  handleLongHover() {
+    // Show text input for manual command entry
+    this.showTextInput();
+  }
+
+  showTextInput() {
+    // Create text input overlay
+    const inputOverlay = document.createElement("div");
+    inputOverlay.className = "text-input-overlay";
+    inputOverlay.innerHTML = `
+            <input type="text" id="manual-command" placeholder="Enter command..." />
+            <button id="send-command">Send</button>
+            <button id="cancel-command">Cancel</button>
+        `;
+
+    document.body.appendChild(inputOverlay);
+
+    // Focus on input
+    const input = document.getElementById("manual-command");
+    input.focus();
+
+    // Handle send
+    document.getElementById("send-command").addEventListener("click", () => {
+      const command = input.value.trim();
+      if (command && this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(
+          JSON.stringify({
+            type: "manual_command",
+            command: command,
+          })
+        );
+        this.setState("thinking");
+      }
+      document.body.removeChild(inputOverlay);
+    });
+
+    // Handle cancel
+    document.getElementById("cancel-command").addEventListener("click", () => {
+      document.body.removeChild(inputOverlay);
+    });
+
+    // Handle escape key
+    const handleKeyPress = (e) => {
+      if (e.key === "Escape") {
+        document.body.removeChild(inputOverlay);
+        document.removeEventListener("keydown", handleKeyPress);
+      } else if (e.key === "Enter") {
+        document.getElementById("send-command").click();
+        document.removeEventListener("keydown", handleKeyPress);
+      }
+    };
+    document.addEventListener("keydown", handleKeyPress);
+  }
+
+  updateVisualState() {
+    const logo = document.getElementById("orby-logo");
+
+    // Remove all state classes
+    logo.classList.remove(
+      "listening",
+      "thinking",
+      "moving",
+      "clicking",
+      "typing",
+      "complete"
+    );
+
+    // Add current state class
+    if (this.currentState !== "idle") {
+      logo.classList.add(this.currentState);
     }
 
-    async requestMicrophonePermission() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop()); // Stop the stream, we just needed permission
-            console.log('Microphone permission granted');
-        } catch (error) {
-            console.error('Microphone permission denied:', error);
-        }
-    }
-
-    async toggleListening() {
-        console.log('Toggle listening called, current state:', this.isListening);
-        if (this.isListening) {
-            this.stopListening();
-        } else {
-            await this.startListening();
-        }
-    }
-
-    async startListening() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
-            this.mediaRecorder = new MediaRecorder(stream);
-            this.audioChunks = [];
-
-            this.mediaRecorder.ondataavailable = (event) => {
-                this.audioChunks.push(event.data);
-            };
-
-            this.mediaRecorder.onstop = () => {
-                this.processAudio();
-            };
-
-            this.mediaRecorder.start();
-            this.isListening = true;
-            this.updateVisualState();
-            
-            console.log('Orby is now listening...');
-            
-            // Auto-stop after 10 seconds
-            setTimeout(() => {
-                if (this.isListening) {
-                    this.stopListening();
-                }
-            }, 10000);
-
-        } catch (error) {
-            console.error('Error starting voice recording:', error);
-        }
-    }
-
-    stopListening() {
-        if (this.mediaRecorder && this.isListening) {
-            this.mediaRecorder.stop();
-            this.isListening = false;
-            this.updateVisualState();
-            console.log('Orby stopped listening');
-        }
-    }
-
-    async processAudio() {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
-        
-        try {
-            const formData = new FormData();
-            formData.append('audio', audioBlob, 'voice-input.wav');
-
-            const response = await fetch(this.backendUrl, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('Backend response:', result);
-                this.handleBackendResponse(result);
-            } else {
-                console.error('Backend error:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Error sending audio to backend:', error);
-        }
-    }
-
-    handleBackendResponse(response) {
-        // Handle the response from your backend
-        // This could include:
-        // - Displaying text responses
-        // - Executing system commands
-        // - Playing audio responses
-        // - Updating UI elements
-        
-        console.log('Processing backend response:', response);
-        
-        // Example: If backend returns a text response
-        if (response.text) {
-            this.showNotification(response.text);
-        }
-        
-        // Example: If backend returns a command to execute
-        if (response.command) {
-            this.executeCommand(response.command);
-        }
-    }
-
-    showNotification(message) {
-        // Create a temporary notification
-        const notification = document.createElement('div');
-        notification.className = 'orby-notification';
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        // Remove after 3 seconds
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 3000);
-    }
-
-    executeCommand(command) {
-        // Execute system commands or other actions
-        console.log('Executing command:', command);
-        // You can integrate with your existing computer use tools here
-    }
-
-    updateVisualState() {
-        const logo = document.getElementById('orby-logo');
-        const listeningText = document.getElementById('listening-text');
-        
-        if (this.isListening) {
-            logo.classList.add('listening');
-            listeningText.classList.add('show');
-        } else {
-            logo.classList.remove('listening');
-            listeningText.classList.remove('show');
-        }
-    }
+    console.log(`Visual state updated to: ${this.currentState}`);
+  }
 }
 
 // Initialize Orby when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing Orby...');
-    new OrbyVoiceAssistant();
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM loaded, initializing Orby...");
+  new OrbyVoiceAssistant();
 });
 
 // Also try initializing after a short delay in case DOM isn't ready
 setTimeout(() => {
-    if (!window.orbyInstance) {
-        console.log('Fallback initialization...');
-        window.orbyInstance = new OrbyVoiceAssistant();
-    }
+  if (!window.orbyInstance) {
+    console.log("Fallback initialization...");
+    window.orbyInstance = new OrbyVoiceAssistant();
+  }
 }, 1000);
