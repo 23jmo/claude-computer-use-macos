@@ -64,7 +64,7 @@ system:
   # Log file path (set to null to disable file logging)
   log_file: null
 
-  # Claude model to use
+  # Claude model to use (Sonnet supports computer use tools)
   model: "claude-3-5-sonnet-20241022"
 
   # Maximum number of recent screenshots to keep

@@ -19,6 +19,9 @@ connected_clients: Dict[str, dict] = {}
 # Event history for reconnecting clients (limited to last 50 events)
 event_history: deque = deque(maxlen=50)
 
+# Message handler callback for processing client messages
+message_handler_callback = None
+
 # Heartbeat interval in seconds
 HEARTBEAT_INTERVAL = 30
 HEARTBEAT_TIMEOUT = 60
@@ -192,6 +195,11 @@ async def handler(websocket: WebSocketServerProtocol):
                             "type": "event_history",
                             "events": list(event_history)
                         }))
+                
+                else:
+                    # Handle other message types via callback
+                    if message_handler_callback:
+                        await message_handler_callback(data, websocket)
 
             except json.JSONDecodeError:
                 print(f"[WebSocket] Invalid JSON from client {client_id}")
@@ -215,6 +223,17 @@ async def handler(websocket: WebSocketServerProtocol):
         await unregister_client(client_id)
 
 
+def set_message_handler(callback):
+    """
+    Set a callback function to handle incoming messages from clients.
+    
+    Args:
+        callback: Async function that takes (data, websocket) as parameters
+    """
+    global message_handler_callback
+    message_handler_callback = callback
+
+
 async def start_server(host: str = "localhost", port: int = 8765):
     """
     Start the WebSocket server.
@@ -231,5 +250,5 @@ async def start_server(host: str = "localhost", port: int = 8765):
 
 
 # Global reference to the broadcast function for easy import
-__all__ = ['start_server', 'broadcast_event', 'connected_clients']
+__all__ = ['start_server', 'broadcast_event', 'connected_clients', 'set_message_handler']
 

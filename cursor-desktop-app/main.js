@@ -69,9 +69,6 @@ function createWindow() {
 
   // Ensure complete transparency
   mainWindow.setBackgroundColor("rgba(0,0,0,0)");
-
-  // Open DevTools for debugging (disabled for clean UI)
-  // mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished initialization

@@ -112,6 +112,7 @@ class OrbyVoiceAssistant {
 
         case "assistant_message":
           // Keep thinking state while processing
+          console.log("Assistant message received:", message.text);
           break;
 
         case "tool_output":
@@ -120,20 +121,39 @@ class OrbyVoiceAssistant {
             message.output.includes("Click")
           ) {
             this.setState("clicking");
+            // Return to idle after click animation
+            setTimeout(() => this.setState("idle"), 500);
           } else if (
             message.output.includes("type") ||
             message.output.includes("Typed")
           ) {
             this.setState("typing");
+            // Return to idle after typing animation
+            setTimeout(() => this.setState("idle"), 1000);
           } else if (
             message.output.includes("move") ||
             message.output.includes("Move")
           ) {
             this.setState("moving");
+            // Return to idle after movement
+            setTimeout(() => this.setState("idle"), 300);
+          } else if (
+            message.output.includes("completed") ||
+            message.output.includes("successfully") ||
+            message.output.includes("finished")
+          ) {
+            this.setState("complete");
+            // Return to idle after completion animation
+            setTimeout(() => this.setState("idle"), 1500);
           }
           break;
 
         case "cursor_action":
+          console.log(
+            "Cursor action event received:",
+            message.action,
+            message.coordinates
+          );
           this.handleCursorAction(message);
           break;
 
@@ -145,6 +165,12 @@ class OrbyVoiceAssistant {
           console.error("Tool error:", message.error);
           this.setState("idle");
           break;
+
+        case "command_complete":
+          // Command sequence finished
+          this.setState("complete");
+          setTimeout(() => this.setState("idle"), 1500);
+          break;
       }
     } catch (error) {
       console.error("Error parsing WebSocket message:", error);
@@ -152,25 +178,41 @@ class OrbyVoiceAssistant {
   }
 
   handleCursorAction(message) {
+    console.log("Handling cursor action:", message);
+
     if (message.action === "mouse_move" && message.coordinates) {
       this.targetPosition = message.coordinates;
       this.setState("moving");
       this.moveCursorTo(message.coordinates);
+      // Return to idle after movement
+      setTimeout(() => this.setState("idle"), 300);
     } else if (message.action === "click") {
       this.setState("clicking");
       setTimeout(() => this.setState("idle"), 500);
     } else if (message.action === "type") {
       this.setState("typing");
       setTimeout(() => this.setState("idle"), 1000);
+    } else if (message.action === "drag") {
+      this.setState("moving");
+      if (message.coordinates) {
+        this.moveCursorTo(message.coordinates);
+      }
+      setTimeout(() => this.setState("idle"), 500);
     }
   }
 
   moveCursorTo(coordinates) {
     const container = document.querySelector(".container");
     if (container && coordinates) {
+      console.log("Moving cursor to:", coordinates);
       container.style.left = `${coordinates.x}px`;
       container.style.top = `${coordinates.y}px`;
       container.style.transform = "translate(-50%, -50%)";
+    } else {
+      console.log("Could not move cursor - container or coordinates missing:", {
+        container,
+        coordinates,
+      });
     }
   }
 

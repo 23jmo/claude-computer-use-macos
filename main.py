@@ -147,7 +147,7 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
 
     # Run the sampling loop
     messages = await sampling_loop(
-        model="claude-3-5-sonnet-20241022",
+        model="claude-3-5-sonnet-20241022",  # Sonnet 3.5 - supports computer use tools
         provider=provider,
         system_prompt_suffix="",
         messages=messages,
@@ -158,6 +158,13 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
         only_n_most_recent_images=10,
         max_tokens=4096,
     )
+    
+    # Broadcast command completion event
+    if enable_websocket:
+        await broadcast_event({
+            "type": "command_complete",
+            "status": "success"
+        })
     
     return messages
 
