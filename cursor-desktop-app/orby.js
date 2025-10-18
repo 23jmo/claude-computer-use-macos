@@ -106,6 +106,12 @@ class OrbyVoiceAssistant {
           console.log("Connected to backend:", message.message);
           break;
 
+        case "state_change":
+          // Backend actively sends state updates
+          console.log("State change received:", message.state);
+          this.setState(message.state);
+          break;
+
         case "instruction":
           this.setState("thinking");
           break;
@@ -270,17 +276,9 @@ class OrbyVoiceAssistant {
   }
 
   handleQuickClick() {
-    // Send trigger message to backend to start voice listening
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(
-        JSON.stringify({
-          type: "trigger_voice_listening",
-        })
-      );
-      this.setState("listening");
-    } else {
-      console.error("WebSocket not connected");
-    }
+    // Show text input for manual command entry (voice is always listening)
+    console.log("Click detected - showing text input");
+    this.showTextInput();
   }
 
   handleLongHover() {

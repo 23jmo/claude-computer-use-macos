@@ -14,6 +14,21 @@ from computer_use_demo.tts import get_tts_manager
 dotenv.load_dotenv()
 
 
+async def broadcast_state(state: str, enable_websocket: bool):
+    """
+    Broadcast state changes to WebSocket clients for real-time UI updates.
+    
+    Args:
+        state: Current state (listening, processing, thinking, executing, clicking, typing, moving, complete, idle)
+        enable_websocket: If True, broadcast to WebSocket clients
+    """
+    if enable_websocket:
+        await broadcast_event({
+            "type": "state_change",
+            "state": state
+        })
+
+
 async def run_computer_use(instruction: str, api_key: str, provider: APIProvider = APIProvider.ANTHROPIC, enable_websocket: bool = False, tts_manager=None):
     """
     Run Claude computer use with the given instruction.
@@ -40,6 +55,9 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
             "type": "instruction",
             "text": instruction
         })
+    
+    # Broadcast that we're thinking/processing
+    await broadcast_state("thinking", enable_websocket)
 
     # Set up the initial messages
     messages: list[BetaMessageParam] = [
@@ -103,6 +121,17 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
         if result.output:
             print(f"> Tool Output [{tool_use_id}]:", result.output)
             
+            # Detect tool action type and broadcast specific state
+            output_lower = result.output.lower()
+            if "click" in output_lower:
+                asyncio.create_task(broadcast_state("clicking", enable_websocket))
+            elif "type" in output_lower or "typed" in output_lower:
+                asyncio.create_task(broadcast_state("typing", enable_websocket))
+            elif "move" in output_lower or "moved" in output_lower:
+                asyncio.create_task(broadcast_state("moving", enable_websocket))
+            else:
+                asyncio.create_task(broadcast_state("executing", enable_websocket))
+            
             # Broadcast tool output to WebSocket clients
             if enable_websocket:
                 asyncio.create_task(broadcast_event({
@@ -159,7 +188,8 @@ async def run_computer_use(instruction: str, api_key: str, provider: APIProvider
         max_tokens=4096,
     )
     
-    # Broadcast command completion event
+    # Broadcast command completion event and state
+    await broadcast_state("complete", enable_websocket)
     if enable_websocket:
         await broadcast_event({
             "type": "command_complete",

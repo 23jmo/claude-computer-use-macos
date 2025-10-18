@@ -1,6 +1,6 @@
 """
 Voice control module for Claude computer use.
-Listens for wake word "claude" and transcribes voice commands using OpenAI Whisper.
+Listens for wake word "orby" and transcribes voice commands using OpenAI Whisper.
 """
 
 import os
@@ -15,7 +15,7 @@ from typing import Optional
 class VoiceListener:
     """
     Continuously listens to microphone and transcribes audio using OpenAI Whisper API.
-    Detects "claude" wake word and extracts commands.
+    Detects "orby" wake word and extracts commands.
     """
     
     def __init__(self, api_key: str, sample_rate: int = 16000, chunk_duration: int = 5):
@@ -30,7 +30,7 @@ class VoiceListener:
         self.client = OpenAI(api_key=api_key)
         self.sample_rate = sample_rate
         self.chunk_duration = chunk_duration
-        self.wake_word = "claude"
+        self.wake_word = "orby"
 
         # Initialize continuous audio input stream (keeps mic open)
         print("[Voice] Opening continuous audio stream...")

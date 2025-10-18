@@ -3,8 +3,8 @@
 
 # Voice Recognition Settings
 voice_recognition:
-  # Wake word to activate Claude (default: "claude")
-  wake_word: "claude"
+  # Wake word to activate Orby (default: "orby")
+  wake_word: "orby"
 
   # Voice activity detection threshold (0.01-0.1, lower = more sensitive)
   vad_threshold: 0.02
