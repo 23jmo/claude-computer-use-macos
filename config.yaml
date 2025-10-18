@@ -1,0 +1,83 @@
+# Claude Computer Use - Voice Overlay Configuration
+# This file contains all customizable settings for the voice overlay system
+
+# Voice Recognition Settings
+voice_recognition:
+  # Wake word to activate Claude (default: "claude")
+  wake_word: "claude"
+
+  # Voice activity detection threshold (0.01-0.1, lower = more sensitive)
+  vad_threshold: 0.02
+
+  # Seconds of silence before stopping recording (default: 1.5)
+  vad_min_silence: 1.5
+
+  # Maximum recording duration in seconds
+  max_recording_duration: 15
+
+  # Audio sample rate in Hz (16000 recommended for Whisper)
+  sample_rate: 16000
+
+  # Enable audio feedback beeps
+  enable_audio_feedback: true
+
+  # Maximum number of API retry attempts
+  max_retries: 3
+
+# Text-to-Speech Settings
+text_to_speech:
+  # Enable TTS for Claude's responses
+  enabled: true
+
+  # macOS voice name (run 'say -v ?' to see available voices)
+  # Popular choices: Samantha, Alex, Victoria, Karen, Moira
+  voice: "Samantha"
+
+  # Speech rate in words per minute (default: 200)
+  rate: 200
+
+  # Enable speech queueing (recommended: true)
+  enable_queue: true
+
+# WebSocket Server Settings
+websocket:
+  # Host to bind to (default: localhost)
+  host: "localhost"
+
+  # Port to listen on (default: 8765)
+  port: 8765
+
+  # Heartbeat interval in seconds
+  heartbeat_interval: 30
+
+  # Heartbeat timeout in seconds
+  heartbeat_timeout: 60
+
+  # Maximum events to store in history
+  max_event_history: 50
+
+# System Settings
+system:
+  # Enable detailed debug logging
+  debug_mode: false
+
+  # Log file path (set to null to disable file logging)
+  log_file: null
+
+  # Claude model to use
+  model: "claude-3-5-sonnet-20241022"
+
+  # Maximum number of recent screenshots to keep
+  max_recent_images: 10
+
+  # Maximum tokens for Claude responses
+  max_tokens: 4096
+
+# Special Commands
+commands:
+  # Commands that trigger special actions
+  stop_words:
+    - "stop"
+    - "cancel"
+    - "halt"
+    - "abort"

@@ -8,6 +8,7 @@ import os
 import sys
 
 from computer_use_demo.voice_control import VoiceListener
+from computer_use_demo.tts import get_tts_manager
 from main import run_computer_use
 
 
@@ -19,6 +20,7 @@ async def voice_control_loop():
     # Get API keys from environment
     anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "YOUR_API_KEY_HERE")
     openai_api_key = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_KEY_HERE")
+    deepgram_api_key = os.getenv("DEEPGRAM_API_KEY", "YOUR_DEEPGRAM_KEY_HERE")
     
     # Validate API keys
     if anthropic_api_key == "YOUR_API_KEY_HERE":
@@ -29,6 +31,14 @@ async def voice_control_loop():
         raise ValueError(
             "Please set your OPENAI_API_KEY environment variable"
         )
+    
+    # Initialize TTS manager (using macOS built-in TTS, no API key needed)
+    print("[Voice] Initializing text-to-speech...")
+    tts_manager = get_tts_manager()
+    if tts_manager:
+        print("[Voice] Text-to-speech enabled (macOS built-in TTS)")
+    else:
+        print("[Voice] Text-to-speech disabled")
     
     # Initialize voice listener
     print("Initializing voice control...")
@@ -57,7 +67,7 @@ async def voice_control_loop():
                 
                 # Execute the command using Claude computer use
                 try:
-                    await run_computer_use(command, anthropic_api_key)
+                    await run_computer_use(command, anthropic_api_key, tts_manager=tts_manager)
                     print("-" * 60)
                     print("✓ Command completed!\n")
                 except Exception as e:

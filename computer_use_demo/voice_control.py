@@ -20,8 +20,8 @@ class VoiceListener:
     
     def __init__(self, api_key: str, sample_rate: int = 16000, chunk_duration: int = 5):
         """
-        Initialize the voice listener.
-        
+        Initialize the voice listener with continuous audio stream.
+
         Args:
             api_key: OpenAI API key for Whisper
             sample_rate: Audio sample rate in Hz (16kHz is optimal for Whisper)
@@ -31,23 +31,32 @@ class VoiceListener:
         self.sample_rate = sample_rate
         self.chunk_duration = chunk_duration
         self.wake_word = "claude"
+
+        # Initialize continuous audio input stream (keeps mic open)
+        print("[Voice] Opening continuous audio stream...")
+        self.stream = sd.InputStream(
+            samplerate=self.sample_rate,
+            channels=1,
+            dtype=np.int16
+        )
+        self.stream.start()
+        print("[Voice] Microphone ready (continuous mode - no flickering)")
         
     def record_audio_chunk(self) -> np.ndarray:
         """
-        Record a chunk of audio from the microphone.
-        
+        Record a chunk of audio from the continuous stream.
+        Microphone stays open between calls (no flickering).
+
         Returns:
             Audio data as numpy array
         """
-        # Record audio for the specified duration
-        audio_data = sd.rec(
-            int(self.chunk_duration * self.sample_rate),
-            samplerate=self.sample_rate,
-            channels=1,  # Mono audio
-            dtype=np.int16
-        )
-        # Wait for recording to complete
-        sd.wait()
+        # Read from continuous stream (mic stays open)
+        frames = int(self.chunk_duration * self.sample_rate)
+        audio_data, overflowed = self.stream.read(frames)
+
+        if overflowed:
+            print("[Voice] Warning: Audio buffer overflow (some samples lost)")
+
         return audio_data
     
     def save_audio_to_temp_file(self, audio_data: np.ndarray) -> str:
@@ -157,6 +166,21 @@ class VoiceListener:
             except Exception:
                 pass  # Ignore cleanup errors
     
+    def cleanup(self):
+        """Stop and close the audio stream."""
+        try:
+            if hasattr(self, 'stream') and self.stream.active:
+                print("[Voice] Stopping audio stream...")
+                self.stream.stop()
+                self.stream.close()
+                print("[Voice] Audio stream closed")
+        except Exception as e:
+            print(f"[Voice] Error closing audio stream: {e}")
+
+    def __del__(self):
+        """Cleanup on deletion."""
+        self.cleanup()
+
     def get_available_devices(self):
         """Print available audio input devices for debugging."""
         print("Available audio devices:")

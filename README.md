@@ -36,11 +36,14 @@ View Anthropic's docs [here](https://docs.anthropic.com/en/docs/build-with-claud
    ```bash
    export ANTHROPIC_API_KEY="CLAUDE_API_KEY"
    export OPENAI_API_KEY="YOUR_OPENAI_KEY"  # Only needed for voice control
+   export DEEPGRAM_API_KEY="YOUR_DEEPGRAM_KEY"  # Only needed for text-to-speech
    ```
 
    Replace `CLAUDE_API_KEY` with your actual Anthropic API key. You find yours [here](https://console.anthropic.com/settings/keys).
 
    For voice control, also set your OpenAI API key (get it [here](https://platform.openai.com/api-keys)).
+
+   For text-to-speech (speaking Claude's responses), set your Deepgram API key (get it [here](https://console.deepgram.com/)).
 
 4. **Grant Accessibility Permissions:**
 
@@ -122,6 +125,15 @@ See [electron-overlay/README.md](electron-overlay/README.md) for overlay documen
 ### 🎤 Voice Control
 
 See [VOICE_CONTROL_GUIDE.md](VOICE_CONTROL_GUIDE.md) for detailed voice control documentation.
+
+### 🔊 Text-to-Speech
+
+Claude's responses are automatically spoken aloud in voice and overlay modes using Deepgram's high-quality TTS:
+
+- **Automatic Speech**: AI messages are converted to speech and played in the background
+- **Non-blocking**: Speech plays while Claude continues working on tasks
+- **High Quality**: Uses Deepgram's "aura-2-asteria-en" voice model
+- **Optional**: TTS is disabled if `DEEPGRAM_API_KEY` is not set
 
 ### 📱 AppleScript Automation
 
