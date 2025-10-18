@@ -10,21 +10,19 @@ from anthropic.types.beta import BetaMessage, BetaMessageParam
 from anthropic import APIResponse
 
 
-async def main():
-    # Set up your Anthropic API key and model
-    api_key = os.getenv("ANTHROPIC_API_KEY", "YOUR_API_KEY_HERE")
-    if api_key == "YOUR_API_KEY_HERE":
-        raise ValueError(
-            "Please first set your API key in the ANTHROPIC_API_KEY environment variable"
-        )
-    provider = APIProvider.ANTHROPIC
-
-    # Check if the instruction is provided via command line arguments
-    if len(sys.argv) > 1:
-        instruction = " ".join(sys.argv[1:])
-    else:
-        instruction = "Save an image of a cat to the desktop."
-
+async def run_computer_use(instruction: str, api_key: str, provider: APIProvider = APIProvider.ANTHROPIC):
+    """
+    Run Claude computer use with the given instruction.
+    This is the core function that can be called from voice control or CLI.
+    
+    Args:
+        instruction: The command/instruction for Claude to execute
+        api_key: Anthropic API key
+        provider: API provider (default: ANTHROPIC)
+    
+    Returns:
+        List of messages from the conversation
+    """
     print(
         f"Starting Claude 'Computer Use'.\nPress ctrl+c to stop.\nInstructions provided: '{instruction}'"
     )
@@ -75,6 +73,30 @@ async def main():
         only_n_most_recent_images=10,
         max_tokens=4096,
     )
+    
+    return messages
+
+
+async def main():
+    """
+    Main entry point for CLI usage.
+    Maintains backward compatibility with original script.
+    """
+    # Set up your Anthropic API key and model
+    api_key = os.getenv("ANTHROPIC_API_KEY", "YOUR_API_KEY_HERE")
+    if api_key == "YOUR_API_KEY_HERE":
+        raise ValueError(
+            "Please first set your API key in the ANTHROPIC_API_KEY environment variable"
+        )
+    
+    # Check if the instruction is provided via command line arguments
+    if len(sys.argv) > 1:
+        instruction = " ".join(sys.argv[1:])
+    else:
+        instruction = "Save an image of a cat to the desktop."
+    
+    # Run computer use with the instruction
+    await run_computer_use(instruction, api_key)
 
 
 if __name__ == "__main__":
