@@ -12,7 +12,7 @@ class OrbyVoiceAssistant {
     // Cursor state machine
     this.currentState = "idle"; // idle, listening, thinking, moving, clicking, typing, complete
     this.stateHistory = [];
-    
+
     // Initialize visual state to idle
     this.updateVisualState();
 
@@ -113,7 +113,7 @@ class OrbyVoiceAssistant {
         case "state_change":
           // Backend actively sends state updates
           console.log("State change received:", message.state);
-          
+
           // Handle wakeword detected state
           if (message.state === "wakeword_detected") {
             this.setState("wakeword_detected");
@@ -225,9 +225,17 @@ class OrbyVoiceAssistant {
     const container = document.querySelector(".container");
     if (container && coordinates) {
       console.log("Moving cursor to:", coordinates);
+
+      // Update target position
+      this.targetPosition = { x: coordinates.x, y: coordinates.y };
+
+      // Apply smooth CSS transition
       container.style.left = `${coordinates.x}px`;
       container.style.top = `${coordinates.y}px`;
       container.style.transform = "translate(-50%, -50%)";
+
+      // Update current position after transition
+      this.currentPosition = { ...this.targetPosition };
     } else {
       console.log("Could not move cursor - container or coordinates missing:", {
         container,

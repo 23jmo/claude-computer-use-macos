@@ -28,6 +28,10 @@ body {
   border: none;
   outline: none;
   pointer-events: none; /* Allow clicks to pass through */
+  /* Smooth movement transitions */
+  transition: left 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    top 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: left, top;
 }
 
 .cursor-graphic {
@@ -102,7 +106,14 @@ body {
   left: -3px;
   right: -3px;
   bottom: -3px;
-  background: linear-gradient(90deg, #8b5cf6, #3b82f6, #06b6d4, #eab308, #f97316);
+  background: linear-gradient(
+    90deg,
+    #8b5cf6,
+    #3b82f6,
+    #06b6d4,
+    #eab308,
+    #f97316
+  );
   border-radius: 13px;
   z-index: -1;
   animation: gradientFlow 3s ease-in-out infinite;
@@ -120,11 +131,10 @@ body {
   border-radius: 50% 50% 50% 0;
   transform: rotate(110deg);
   position: relative;
-  box-shadow: 
-    0 0 40px rgba(0, 212, 170, 0.8), 
-    0 0 80px rgba(0, 212, 170, 0.6),
+  box-shadow: 0 0 40px rgba(0, 212, 170, 0.8), 0 0 80px rgba(0, 212, 170, 0.6),
     0 0 120px rgba(0, 212, 170, 0.4);
-  animation: listeningTransition 1.5s ease-out forwards, wakewordPulse 0.5s ease-out;
+  animation: listeningTransition 1.5s ease-out forwards,
+    wakewordPulse 0.5s ease-out;
 }
 
 .cursor-shape.wakeword_detected .inner-circle {
@@ -146,23 +156,17 @@ body {
 @keyframes wakewordPulse {
   0% {
     transform: rotate(110deg) scale(1);
-    box-shadow: 
-      0 0 40px rgba(0, 212, 170, 0.8), 
-      0 0 80px rgba(0, 212, 170, 0.6),
+    box-shadow: 0 0 40px rgba(0, 212, 170, 0.8), 0 0 80px rgba(0, 212, 170, 0.6),
       0 0 120px rgba(0, 212, 170, 0.4);
   }
   50% {
     transform: rotate(110deg) scale(1.3);
-    box-shadow: 
-      0 0 80px rgba(0, 212, 170, 1), 
-      0 0 160px rgba(0, 212, 170, 0.8),
+    box-shadow: 0 0 80px rgba(0, 212, 170, 1), 0 0 160px rgba(0, 212, 170, 0.8),
       0 0 240px rgba(0, 212, 170, 0.6);
   }
   100% {
     transform: rotate(110deg) scale(1);
-    box-shadow: 
-      0 0 40px rgba(0, 212, 170, 0.8), 
-      0 0 80px rgba(0, 212, 170, 0.6),
+    box-shadow: 0 0 40px rgba(0, 212, 170, 0.8), 0 0 80px rgba(0, 212, 170, 0.6),
       0 0 120px rgba(0, 212, 170, 0.4);
   }
 }
@@ -228,48 +232,70 @@ body {
 }
 
 @keyframes gradientFlow {
-  0%, 100% {
-    background: linear-gradient(90deg, #8b5cf6, #3b82f6, #06b6d4, #eab308, #f97316);
+  0%,
+  100% {
+    background: linear-gradient(
+      90deg,
+      #8b5cf6,
+      #3b82f6,
+      #06b6d4,
+      #eab308,
+      #f97316
+    );
     opacity: 1;
   }
   25% {
-    background: linear-gradient(90deg, #3b82f6, #06b6d4, #eab308, #f97316, #8b5cf6);
+    background: linear-gradient(
+      90deg,
+      #3b82f6,
+      #06b6d4,
+      #eab308,
+      #f97316,
+      #8b5cf6
+    );
     opacity: 0.8;
   }
   50% {
-    background: linear-gradient(90deg, #06b6d4, #eab308, #f97316, #8b5cf6, #3b82f6);
+    background: linear-gradient(
+      90deg,
+      #06b6d4,
+      #eab308,
+      #f97316,
+      #8b5cf6,
+      #3b82f6
+    );
     opacity: 1;
   }
   75% {
-    background: linear-gradient(90deg, #eab308, #f97316, #8b5cf6, #3b82f6, #06b6d4);
+    background: linear-gradient(
+      90deg,
+      #eab308,
+      #f97316,
+      #8b5cf6,
+      #3b82f6,
+      #06b6d4
+    );
     opacity: 0.8;
   }
 }
 
 @keyframes gradientFlow2 {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(-50%) scaleX(1);
-    box-shadow: 
-      0 0 0 3px #f97316,
-      0 0 20px rgba(249, 115, 22, 0.5);
+    box-shadow: 0 0 0 3px #f97316, 0 0 20px rgba(249, 115, 22, 0.5);
   }
   25% {
     transform: translateX(-50%) scaleX(1.05);
-    box-shadow: 
-      0 0 0 3px #eab308,
-      0 0 25px rgba(234, 179, 8, 0.6);
+    box-shadow: 0 0 0 3px #eab308, 0 0 25px rgba(234, 179, 8, 0.6);
   }
   50% {
     transform: translateX(-50%) scaleX(1.1);
-    box-shadow: 
-      0 0 0 3px #06b6d4,
-      0 0 30px rgba(6, 182, 212, 0.7);
+    box-shadow: 0 0 0 3px #06b6d4, 0 0 30px rgba(6, 182, 212, 0.7);
   }
   75% {
     transform: translateX(-50%) scaleX(1.05);
-    box-shadow: 
-      0 0 0 3px #3b82f6,
-      0 0 25px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 0 3px #3b82f6, 0 0 25px rgba(59, 130, 246, 0.6);
   }
 }
 
@@ -282,12 +308,10 @@ body {
     border-radius: 50% 50% 50% 0;
     transform: rotate(110deg);
     background: linear-gradient(135deg, #00d4aa, #00b894);
-    box-shadow: 
-      0 0 40px rgba(0, 212, 170, 0.8), 
-      0 0 80px rgba(0, 212, 170, 0.6),
+    box-shadow: 0 0 40px rgba(0, 212, 170, 0.8), 0 0 80px rgba(0, 212, 170, 0.6),
       0 0 120px rgba(0, 212, 170, 0.4);
   }
-  
+
   25% {
     /* Begin expansion and color shift */
     width: 85px;
@@ -295,12 +319,10 @@ body {
     border-radius: 25px;
     transform: rotate(45deg);
     background: linear-gradient(135deg, #00d4aa, #00b894, #3b82f6);
-    box-shadow: 
-      0 0 50px rgba(0, 212, 170, 0.6),
-      0 0 100px rgba(0, 212, 170, 0.4),
-      0 0 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 50px rgba(0, 212, 170, 0.6),
+      0 0 100px rgba(0, 212, 170, 0.4), 0 0 20px rgba(59, 130, 246, 0.3);
   }
-  
+
   50% {
     /* Continue expansion and color transition */
     width: 100px;
@@ -308,12 +330,10 @@ body {
     border-radius: 15px;
     transform: rotate(20deg);
     background: linear-gradient(135deg, #00d4aa, #3b82f6, #06b6d4);
-    box-shadow: 
-      0 0 30px rgba(0, 212, 170, 0.4),
-      0 0 60px rgba(59, 130, 246, 0.4),
-      0 0 20px rgba(6, 182, 212, 0.3);
+    box-shadow: 0 0 30px rgba(0, 212, 170, 0.4),
+      0 0 60px rgba(59, 130, 246, 0.4), 0 0 20px rgba(6, 182, 212, 0.3);
   }
-  
+
   75% {
     /* Near final shape with rainbow colors */
     width: 110px;
@@ -321,11 +341,9 @@ body {
     border-radius: 12px;
     transform: rotate(5deg);
     background: rgba(0, 0, 0, 0.6);
-    box-shadow: 
-      0 0 0 2px #8b5cf6,
-      0 0 15px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 0 2px #8b5cf6, 0 0 15px rgba(139, 92, 246, 0.4);
   }
-  
+
   100% {
     /* Final rainbow gradient listening shape */
     width: 120px;
@@ -333,9 +351,7 @@ body {
     border-radius: 10px;
     transform: rotate(0deg);
     background: rgba(0, 0, 0, 0.8);
-    box-shadow: 
-      0 0 0 3px #8b5cf6,
-      0 0 20px rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 0 3px #8b5cf6, 0 0 20px rgba(139, 92, 246, 0.5);
   }
 }
 

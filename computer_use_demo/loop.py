@@ -22,7 +22,7 @@ from anthropic.types.beta import (
     BetaToolResultBlockParam,
 )
 
-from .tools import AppleScriptTool, BashTool, ComputerTool, EditTool, ToolCollection, ToolResult
+from .tools import AppleScriptTool, BashTool, ComputerTool, CubbyTool, EditTool, ToolCollection, ToolResult
 
 BETA_FLAG = "computer-use-2024-10-22"
 
@@ -67,6 +67,18 @@ SYSTEM_PROMPT = f"""<SYSTEM_CAPABILITY>
 * Example: To control other apps, use action "execute_script" with the AppleScript code.
 </APPLESCRIPT_CAPABILITIES>
 
+<CUBBY_MEMORY>
+* You have access to search_screenshots tool that searches through OCR text from previous screen captures.
+* This is your MEMORY - use it proactively when users ask about things they've seen before.
+* ALWAYS use search_screenshots when:
+  - User asks "what did I..." or "find that thing about..."
+  - User references past conversations, emails, websites, or documents
+  - User mentions something they saw, read, or viewed before
+  - You need context from previous screen activity
+* Examples: "that Slack message about X", "the email from Sarah", "the API docs I was reading"
+* Search before answering questions about past activity to provide accurate, context-aware responses.
+</CUBBY_MEMORY>
+
 <IMPORTANT>
 * When using Safari or other applications, if any startup wizards or prompts appear, **IGNORE THEM**. Do not interact with them. Instead, click on the address bar or the area where you can enter commands or URLs, and proceed with your task.
 * If the item you are looking at is a PDF, and after taking a single screenshot of the PDF it seems you want to read the entire document, instead of trying to continue to read the PDF from your screenshots and navigation, determine the URL, use `curl` to download the PDF, install and use `pdftotext` (you may need to install it via `brew install poppler`) to convert it to a text file, and then read that text file directly with your `str_replace_editor` tool.
@@ -105,6 +117,7 @@ async def sampling_loop(
         BashTool(),
         EditTool(),
         AppleScriptTool(),
+        CubbyTool(),
     )
     system = (
         f"{SYSTEM_PROMPT}{' ' + system_prompt_suffix if system_prompt_suffix else ''}"
