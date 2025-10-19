@@ -11,6 +11,7 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState([]);
   const [currentInstruction, setCurrentInstruction] = useState('');
+  const [currentState, setCurrentState] = useState('idle'); // idle, listening, processing
   const wsRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -32,11 +33,14 @@ function App() {
       ws.onopen = () => {
         console.log('[WebSocket] Connected to backend');
         setConnected(true);
+        // Set initial state to listening since the backend starts listening immediately
+        setCurrentState('listening');
       };
 
       ws.onclose = () => {
         console.log('[WebSocket] Disconnected from backend');
         setConnected(false);
+        setCurrentState('idle');
         
         // Attempt to reconnect after 3 seconds
         setTimeout(() => {
@@ -58,6 +62,11 @@ function App() {
           switch (data.type) {
             case 'connection':
               // Connection confirmation
+              break;
+            
+            case 'state_change':
+              console.log('[WebSocket] State change:', data.state);
+              setCurrentState(data.state);
               break;
             
             case 'instruction':
@@ -132,6 +141,7 @@ function App() {
   const clearMessages = () => {
     setMessages([]);
     setCurrentInstruction('');
+    setCurrentState('idle');
   };
 
   return (
@@ -163,9 +173,28 @@ function App() {
       {/* Messages */}
       <div className="messages-container">
         {messages.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">👂</div>
-            <div className="empty-text">Waiting for activity...</div>
+          <div className={`state-display state-${currentState}`}>
+            {currentState === 'idle' && (
+              <div className="idle-state">
+                <div className="idle-icon">🤖</div>
+                <div className="idle-text">Ready</div>
+              </div>
+            )}
+            {currentState === 'listening' && (
+              <div className="listening-state">
+                <div className="listening-text">Listening</div>
+                <div className="listening-shapes">
+                  <div className="listening-shape shape-1"></div>
+                  <div className="listening-shape shape-2"></div>
+                </div>
+              </div>
+            )}
+            {currentState === 'processing' && (
+              <div className="processing-state">
+                <div className="processing-icon">⚡</div>
+                <div className="processing-text">Processing...</div>
+              </div>
+            )}
           </div>
         ) : (
           messages.map((message) => (

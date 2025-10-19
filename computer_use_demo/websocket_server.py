@@ -169,6 +169,17 @@ async def handler(websocket: WebSocketServerProtocol):
         # Register client
         await register_client(websocket, client_id)
 
+        # Send initial connection message and idle state
+        await websocket.send(json.dumps({
+            "type": "connection", 
+            "message": "Connected to Orby Voice Assistant"
+        }))
+        await websocket.send(json.dumps({
+            "type": "state_change", 
+            "state": "idle"
+        }))
+        print(f"[WebSocket] Client {client_id} connected - sent initial idle state")
+
         # Start heartbeat monitor
         heartbeat_task = asyncio.create_task(heartbeat_monitor(websocket, client_id))
 

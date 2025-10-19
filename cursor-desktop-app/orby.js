@@ -12,6 +12,9 @@ class OrbyVoiceAssistant {
     // Cursor state machine
     this.currentState = "idle"; // idle, listening, thinking, moving, clicking, typing, complete
     this.stateHistory = [];
+    
+    // Initialize visual state to idle
+    this.updateVisualState();
 
     // Interaction tracking
     this.hoverStartTime = null;
@@ -60,10 +63,11 @@ class OrbyVoiceAssistant {
       this.ws.onopen = () => {
         console.log("WebSocket connected to backend");
         this.reconnectAttempts = 0;
-        this.setState("idle");
+        // Don't set state here - wait for backend to send initial state
       };
 
       this.ws.onmessage = (event) => {
+        console.log("WebSocket message received:", event.data);
         this.handleWebSocketMessage(event.data);
       };
 
@@ -109,7 +113,17 @@ class OrbyVoiceAssistant {
         case "state_change":
           // Backend actively sends state updates
           console.log("State change received:", message.state);
-          this.setState(message.state);
+          
+          // Handle wakeword detected state
+          if (message.state === "wakeword_detected") {
+            this.setState("wakeword_detected");
+            // After transition completes, go to listening state
+            setTimeout(() => this.setState("listening"), 1500);
+          } else {
+            // Handle all other states including idle state
+            console.log(`Setting state to: ${message.state}`);
+            this.setState(message.state);
+          }
           break;
 
         case "instruction":
@@ -233,6 +247,8 @@ class OrbyVoiceAssistant {
 
       this.currentState = newState;
       this.updateVisualState();
+    } else {
+      console.log(`State already ${newState}, skipping update`);
     }
   }
 
@@ -350,6 +366,8 @@ class OrbyVoiceAssistant {
 
   updateVisualState() {
     const logo = document.getElementById("orby-logo");
+    const listeningText = document.getElementById("listening-text");
+    const cursorGraphic = document.querySelector(".cursor-graphic");
 
     // Remove all state classes
     logo.classList.remove(
@@ -358,12 +376,31 @@ class OrbyVoiceAssistant {
       "moving",
       "clicking",
       "typing",
-      "complete"
+      "complete",
+      "wakeword_detected"
     );
 
     // Add current state class
     if (this.currentState !== "idle") {
       logo.classList.add(this.currentState);
+    }
+
+    // Add listening class to cursor-graphic for the second shape
+    if (cursorGraphic) {
+      if (this.currentState === "listening") {
+        cursorGraphic.classList.add("listening");
+      } else {
+        cursorGraphic.classList.remove("listening");
+      }
+    }
+
+    // Show/hide listening text based on state
+    if (listeningText) {
+      if (this.currentState === "listening") {
+        listeningText.classList.add("show");
+      } else {
+        listeningText.classList.remove("show");
+      }
     }
 
     console.log(`Visual state updated to: ${this.currentState}`);

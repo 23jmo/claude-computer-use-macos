@@ -3,8 +3,16 @@
 
 # Voice Recognition Settings
 voice_recognition:
-  # Wake word to activate Orby (default: "orby")
-  wake_word: "orby"
+  # Wake words - comprehensive list for maximum flexibility
+  # Includes: direct variations, shortened forms, initials (RB), misrecognitions, and phonetic spellings
+  wake_words: ["orby", "orbi", "orbie", "orbee", "orbe", "orb", "ob", "ory", 
+               "rb", "r b", "arby", "arbi", "arbee", "ar b", "r bee",
+               "orvy", "orvey", "horby", "horbi", "orpy", "erby", "erbi",
+               "orba", "orbey", "orbay", "orboy",
+               "hobby", "bobby", "derby", "herby", "curby",
+               "aw-bee", "or-bee", "awr-bee", "oar-bee", "ar-bee",
+               "awbee", "orbee", "awrbee", "oarbee", "arbee"]
+  primary_wake_word: "orby"
 
   # Voice activity detection threshold (0.01-0.1, lower = more sensitive)
   vad_threshold: 0.02

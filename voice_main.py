@@ -7,7 +7,7 @@ import asyncio
 import os
 import sys
 
-from computer_use_demo.voice_control import VoiceListener
+from computer_use_demo.voice_control_deepgram import VoiceListenerDeepgram
 from computer_use_demo.tts import get_tts_manager
 from main import run_computer_use
 
@@ -19,7 +19,6 @@ async def voice_control_loop():
     """
     # Get API keys from environment
     anthropic_api_key = os.getenv("ANTHROPIC_API_KEY", "YOUR_API_KEY_HERE")
-    openai_api_key = os.getenv("OPENAI_API_KEY", "YOUR_OPENAI_KEY_HERE")
     deepgram_api_key = os.getenv("DEEPGRAM_API_KEY", "YOUR_DEEPGRAM_KEY_HERE")
     
     # Validate API keys
@@ -27,9 +26,9 @@ async def voice_control_loop():
         raise ValueError(
             "Please set your ANTHROPIC_API_KEY environment variable"
         )
-    if openai_api_key == "YOUR_OPENAI_KEY_HERE":
+    if deepgram_api_key == "YOUR_DEEPGRAM_KEY_HERE":
         raise ValueError(
-            "Please set your OPENAI_API_KEY environment variable"
+            "Please set your DEEPGRAM_API_KEY environment variable"
         )
     
     # Initialize TTS manager (using macOS built-in TTS, no API key needed)
@@ -40,10 +39,10 @@ async def voice_control_loop():
     else:
         print("[Voice] Text-to-speech disabled")
     
-    # Initialize voice listener
+    # Initialize voice listener with Deepgram
     print("Initializing voice control...")
-    print("Setting up microphone and Whisper API...")
-    voice_listener = VoiceListener(api_key=openai_api_key)
+    print("Setting up microphone and Deepgram API...")
+    voice_listener = VoiceListenerDeepgram(api_key=deepgram_api_key)
     
     print("\n" + "="*60)
     print("Voice Control Active!")

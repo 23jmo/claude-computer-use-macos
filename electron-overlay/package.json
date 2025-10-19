@@ -12,7 +12,11 @@
     "electron-dev": "cross-env NODE_ENV=development electron .",
     "start": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && npm run electron-dev\""
   },
-  "keywords": ["electron", "overlay", "claude"],
+  "keywords": [
+    "electron",
+    "overlay",
+    "claude"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -28,4 +32,3 @@
     "wait-on": "^7.2.0"
   }
 }
-

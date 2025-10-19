@@ -83,41 +83,91 @@ body {
 }
 
 .cursor-shape.listening {
-  width: 200px;
-  height: 40px;
-  background: black;
-  border-radius: 20px;
+  width: 120px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 10px;
   transform: rotate(0deg);
-  border: 3px solid;
-  border-image: linear-gradient(
-      90deg,
-      #8b5cf6,
-      #3b82f6,
-      #06b6d4,
-      #eab308,
-      #f97316
-    )
-    1;
-  animation: listeningGlow 2s ease-in-out infinite;
   position: relative;
+  overflow: hidden;
+  animation: listeningTransition 1.5s ease-out forwards;
+  border: 3px solid transparent;
+  background-clip: padding-box;
 }
 
 .cursor-shape.listening::before {
   content: "";
   position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 12px solid #8b5cf6;
-  transform: rotate(-45deg);
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6, #06b6d4, #eab308, #f97316);
+  border-radius: 13px;
+  z-index: -1;
+  animation: gradientFlow 3s ease-in-out infinite;
 }
 
 .cursor-shape.listening .inner-circle {
   display: none;
 }
+
+/* Wakeword detected state - triggers the transition */
+.cursor-shape.wakeword_detected {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #00d4aa, #00b894);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(110deg);
+  position: relative;
+  box-shadow: 
+    0 0 40px rgba(0, 212, 170, 0.8), 
+    0 0 80px rgba(0, 212, 170, 0.6),
+    0 0 120px rgba(0, 212, 170, 0.4);
+  animation: listeningTransition 1.5s ease-out forwards, wakewordPulse 0.5s ease-out;
+}
+
+.cursor-shape.wakeword_detected .inner-circle {
+  display: block;
+  animation: fadeOut 0.5s ease-out 0.5s forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-110deg) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-110deg) scale(0.8);
+  }
+}
+
+@keyframes wakewordPulse {
+  0% {
+    transform: rotate(110deg) scale(1);
+    box-shadow: 
+      0 0 40px rgba(0, 212, 170, 0.8), 
+      0 0 80px rgba(0, 212, 170, 0.6),
+      0 0 120px rgba(0, 212, 170, 0.4);
+  }
+  50% {
+    transform: rotate(110deg) scale(1.3);
+    box-shadow: 
+      0 0 80px rgba(0, 212, 170, 1), 
+      0 0 160px rgba(0, 212, 170, 0.8),
+      0 0 240px rgba(0, 212, 170, 0.6);
+  }
+  100% {
+    transform: rotate(110deg) scale(1);
+    box-shadow: 
+      0 0 40px rgba(0, 212, 170, 0.8), 
+      0 0 80px rgba(0, 212, 170, 0.6),
+      0 0 120px rgba(0, 212, 170, 0.4);
+  }
+}
+
+/* Removed second shape - only showing one rectangle for listening state */
 
 .inner-circle {
   position: absolute;
@@ -177,18 +227,115 @@ body {
   }
 }
 
-@keyframes listeningGlow {
-  0% {
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.9),
-      0 0 60px rgba(255, 255, 255, 0.6);
+@keyframes gradientFlow {
+  0%, 100% {
+    background: linear-gradient(90deg, #8b5cf6, #3b82f6, #06b6d4, #eab308, #f97316);
+    opacity: 1;
+  }
+  25% {
+    background: linear-gradient(90deg, #3b82f6, #06b6d4, #eab308, #f97316, #8b5cf6);
+    opacity: 0.8;
   }
   50% {
-    box-shadow: 0 0 50px rgba(255, 255, 255, 1),
-      0 0 100px rgba(255, 255, 255, 0.8), 0 0 150px rgba(255, 255, 255, 0.6);
+    background: linear-gradient(90deg, #06b6d4, #eab308, #f97316, #8b5cf6, #3b82f6);
+    opacity: 1;
   }
+  75% {
+    background: linear-gradient(90deg, #eab308, #f97316, #8b5cf6, #3b82f6, #06b6d4);
+    opacity: 0.8;
+  }
+}
+
+@keyframes gradientFlow2 {
+  0%, 100% {
+    transform: translateX(-50%) scaleX(1);
+    box-shadow: 
+      0 0 0 3px #f97316,
+      0 0 20px rgba(249, 115, 22, 0.5);
+  }
+  25% {
+    transform: translateX(-50%) scaleX(1.05);
+    box-shadow: 
+      0 0 0 3px #eab308,
+      0 0 25px rgba(234, 179, 8, 0.6);
+  }
+  50% {
+    transform: translateX(-50%) scaleX(1.1);
+    box-shadow: 
+      0 0 0 3px #06b6d4,
+      0 0 30px rgba(6, 182, 212, 0.7);
+  }
+  75% {
+    transform: translateX(-50%) scaleX(1.05);
+    box-shadow: 
+      0 0 0 3px #3b82f6,
+      0 0 25px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* Transition animation from teal cursor to rainbow gradient */
+@keyframes listeningTransition {
+  0% {
+    /* Start as teal cursor shape */
+    width: 70px;
+    height: 70px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(110deg);
+    background: linear-gradient(135deg, #00d4aa, #00b894);
+    box-shadow: 
+      0 0 40px rgba(0, 212, 170, 0.8), 
+      0 0 80px rgba(0, 212, 170, 0.6),
+      0 0 120px rgba(0, 212, 170, 0.4);
+  }
+  
+  25% {
+    /* Begin expansion and color shift */
+    width: 85px;
+    height: 35px;
+    border-radius: 25px;
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #00d4aa, #00b894, #3b82f6);
+    box-shadow: 
+      0 0 50px rgba(0, 212, 170, 0.6),
+      0 0 100px rgba(0, 212, 170, 0.4),
+      0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  
+  50% {
+    /* Continue expansion and color transition */
+    width: 100px;
+    height: 25px;
+    border-radius: 15px;
+    transform: rotate(20deg);
+    background: linear-gradient(135deg, #00d4aa, #3b82f6, #06b6d4);
+    box-shadow: 
+      0 0 30px rgba(0, 212, 170, 0.4),
+      0 0 60px rgba(59, 130, 246, 0.4),
+      0 0 20px rgba(6, 182, 212, 0.3);
+  }
+  
+  75% {
+    /* Near final shape with rainbow colors */
+    width: 110px;
+    height: 22px;
+    border-radius: 12px;
+    transform: rotate(5deg);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: 
+      0 0 0 2px #8b5cf6,
+      0 0 15px rgba(139, 92, 246, 0.4);
+  }
+  
   100% {
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.9),
-      0 0 60px rgba(255, 255, 255, 0.6);
+    /* Final rainbow gradient listening shape */
+    width: 120px;
+    height: 20px;
+    border-radius: 10px;
+    transform: rotate(0deg);
+    background: rgba(0, 0, 0, 0.8);
+    box-shadow: 
+      0 0 0 3px #8b5cf6,
+      0 0 20px rgba(139, 92, 246, 0.5);
   }
 }
 

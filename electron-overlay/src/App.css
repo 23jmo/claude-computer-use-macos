@@ -141,23 +141,223 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Empty State */
-.empty-state {
+/* State Display */
+.state-display {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  opacity: 0.5;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.empty-icon {
+/* Idle State */
+.idle-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.idle-icon {
   font-size: 48px;
   margin-bottom: 12px;
+  animation: gentlePulse 3s ease-in-out infinite;
 }
 
-.empty-text {
+.idle-text {
   font-size: 14px;
+  opacity: 0.7;
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* Listening State */
+.listening-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.listening-text {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.listening-shapes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.listening-shape {
+  width: 120px;
+  height: 20px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  position: relative;
+  overflow: hidden;
+  animation: gradientFlow 3s ease-in-out infinite;
+  box-shadow: 
+    0 0 0 3px #8b5cf6,
+    0 0 20px rgba(139, 92, 246, 0.5);
+}
+
+.shape-1 {
+  animation-delay: 0s;
+  box-shadow: 
+    0 0 0 3px #8b5cf6,
+    0 0 20px rgba(139, 92, 246, 0.5);
+}
+
+.shape-2 {
+  animation-delay: 0.5s;
+  box-shadow: 
+    0 0 0 3px #f97316,
+    0 0 20px rgba(249, 115, 22, 0.5);
+}
+
+@keyframes gradientFlow {
+  0%, 100% {
+    transform: scaleX(1);
+    box-shadow: 
+      0 0 0 3px #8b5cf6,
+      0 0 20px rgba(139, 92, 246, 0.5);
+  }
+  25% {
+    transform: scaleX(1.05);
+    box-shadow: 
+      0 0 0 3px #3b82f6,
+      0 0 25px rgba(59, 130, 246, 0.6);
+  }
+  50% {
+    transform: scaleX(1.1);
+    box-shadow: 
+      0 0 0 3px #06b6d4,
+      0 0 30px rgba(6, 182, 212, 0.7);
+  }
+  75% {
+    transform: scaleX(1.05);
+    box-shadow: 
+      0 0 0 3px #eab308,
+      0 0 25px rgba(234, 179, 8, 0.6);
+  }
+}
+
+.shape-2 {
+  animation: gradientFlow2 3s ease-in-out infinite;
+  animation-delay: 0.5s;
+}
+
+@keyframes gradientFlow2 {
+  0%, 100% {
+    transform: scaleX(1);
+    box-shadow: 
+      0 0 0 3px #f97316,
+      0 0 20px rgba(249, 115, 22, 0.5);
+  }
+  25% {
+    transform: scaleX(1.05);
+    box-shadow: 
+      0 0 0 3px #eab308,
+      0 0 25px rgba(234, 179, 8, 0.6);
+  }
+  50% {
+    transform: scaleX(1.1);
+    box-shadow: 
+      0 0 0 3px #06b6d4,
+      0 0 30px rgba(6, 182, 212, 0.7);
+  }
+  75% {
+    transform: scaleX(1.05);
+    box-shadow: 
+      0 0 0 3px #3b82f6,
+      0 0 25px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* Processing State */
+.processing-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.processing-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  animation: processingPulse 1s ease-in-out infinite;
+}
+
+.processing-text {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+@keyframes processingPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* State Transitions */
+.state-display.state-idle .idle-state {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.state-display.state-idle .listening-state,
+.state-display.state-idle .processing-state {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.state-display.state-listening .listening-state {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.state-display.state-listening .idle-state,
+.state-display.state-listening .processing-state {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.state-display.state-processing .processing-state {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.state-display.state-processing .idle-state,
+.state-display.state-processing .listening-state {
+  opacity: 0;
+  transform: scale(0.8);
 }
 
 /* Message */

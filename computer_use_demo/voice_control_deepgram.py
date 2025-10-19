@@ -1,6 +1,6 @@
 """
-Voice control module for Claude computer use.
-Listens for wake word "orby" and transcribes voice commands using OpenAI Whisper.
+Voice control module for Claude computer use using Deepgram.
+Listens for wake word "orby" and transcribes voice commands using Deepgram API.
 """
 
 import os
@@ -8,13 +8,13 @@ import tempfile
 import sounddevice as sd
 import numpy as np
 from scipy.io import wavfile
-from openai import OpenAI
+from deepgram import DeepgramClient, PrerecordedOptions, FileSource
 from typing import Optional
 
 
-class VoiceListener:
+class VoiceListenerDeepgram:
     """
-    Continuously listens to microphone and transcribes audio using OpenAI Whisper API.
+    Continuously listens to microphone and transcribes audio using Deepgram API.
     Detects "orby" wake word and extracts commands.
     """
     
@@ -23,11 +23,11 @@ class VoiceListener:
         Initialize the voice listener with continuous audio stream.
 
         Args:
-            api_key: OpenAI API key for Whisper
-            sample_rate: Audio sample rate in Hz (16kHz is optimal for Whisper)
+            api_key: Deepgram API key for speech-to-text
+            sample_rate: Audio sample rate in Hz (16kHz is optimal for Deepgram)
             chunk_duration: Duration of each recording chunk in seconds
         """
-        self.client = OpenAI(api_key=api_key)
+        self.client = DeepgramClient(api_key)
         self.sample_rate = sample_rate
         self.chunk_duration = chunk_duration
         # Comprehensive wake word variations (~40 variations)
@@ -98,7 +98,7 @@ class VoiceListener:
     
     def transcribe_audio(self, audio_file_path: str) -> str:
         """
-        Transcribe audio file using OpenAI Whisper API.
+        Transcribe audio file using Deepgram API.
         
         Args:
             audio_file_path: Path to the audio file
@@ -108,15 +108,27 @@ class VoiceListener:
         """
         try:
             with open(audio_file_path, "rb") as audio_file:
-                # Call Whisper API for transcription
-                transcript = self.client.audio.transcriptions.create(
-                    model="whisper-1",
-                    file=audio_file,
-                    language="en"  # Optimize for English
+                # Configure Deepgram options
+                options = PrerecordedOptions(
+                    model="nova-2",
+                    language="en",
+                    smart_format=True,
+                    punctuate=True,
+                    diarize=False
                 )
-            return transcript.text.strip()
+                
+                # Call Deepgram API for transcription
+                response = self.client.listen.prerecorded.v("1").transcribe_file(
+                    {"buffer": audio_file, "mimetype": "audio/wav"},
+                    options
+                )
+                
+                # Extract transcript text
+                transcript = response.results.channels[0].alternatives[0].transcript
+                return transcript.strip()
+                
         except Exception as e:
-            print(f"Transcription error: {e}")
+            print(f"Deepgram transcription error: {e}")
             return ""
     
     def extract_command(self, transcription: str) -> Optional[str]:
@@ -127,89 +139,77 @@ class VoiceListener:
             transcription: Full transcription text
             
         Returns:
-            Command text after wake word, or None if wake word not found
+            Extracted command if wake word found, None otherwise
         """
+        if not transcription:
+            return None
+            
         # Convert to lowercase for case-insensitive matching
-        lower_text = transcription.lower()
+        text = transcription.lower().strip()
         
         # Check for any wake word variation
         detected_wake_word = None
-        wake_word_index = -1
         for wake_word in self.wake_words:
-            if wake_word in lower_text:
+            if wake_word in text:
                 detected_wake_word = wake_word
-                wake_word_index = lower_text.find(wake_word)
                 break
         
-        if detected_wake_word is None:
-            return None
+        if detected_wake_word:
+            # Extract everything after the detected wake word
+            parts = text.split(detected_wake_word, 1)
+            if len(parts) > 1:
+                command = parts[1].strip()
+                if command:
+                    print(f"[Voice] Wake word '{detected_wake_word}' detected")
+                    print(f"[Voice] Command extracted: '{command}'")
+                    return command
         
-        # Extract command (from original transcription to preserve capitalization)
-        command_start = wake_word_index + len(detected_wake_word)
-        command = transcription[command_start:].strip()
-        
-        # Remove common filler words at the start
-        filler_words = ["please", "can you", "could you", "would you"]
-        command_lower = command.lower()
-        for filler in filler_words:
-            if command_lower.startswith(filler):
-                command = command[len(filler):].strip()
-                command_lower = command.lower()
-        
-        if command:
-            print(f"[Voice] Wake word '{detected_wake_word}' detected")
-            print(f"[Voice] Command extracted: '{command}'")
-        
-        return command if command else None
+        return None
     
     def listen_once(self) -> Optional[str]:
         """
-        Listen for one audio chunk and check for wake word.
+        Listen for one command and return it if detected.
         
         Returns:
-            Command text if wake word detected, None otherwise
+            Command string if wake word and command detected, None otherwise
         """
-        # Record audio chunk
-        audio_data = self.record_audio_chunk()
-        
-        # Save to temporary file
-        temp_path = self.save_audio_to_temp_file(audio_data)
-        
         try:
-            # Transcribe audio
-            transcription = self.transcribe_audio(temp_path)
+            # Record audio chunk
+            print("[Voice] Recording audio...")
+            audio_data = self.record_audio_chunk()
             
-            if transcription:
-                # Check for wake word and extract command
-                command = self.extract_command(transcription)
-                return command
+            # Save to temporary file
+            temp_file = self.save_audio_to_temp_file(audio_data)
             
-            return None
-            
-        finally:
-            # Clean up temporary file
             try:
-                os.unlink(temp_path)
-            except Exception:
-                pass  # Ignore cleanup errors
+                # Transcribe using Deepgram
+                print("[Voice] Transcribing with Deepgram...")
+                transcription = self.transcribe_audio(temp_file)
+                
+                if transcription:
+                    print(f"[Voice] Transcription: '{transcription}'")
+                    
+                    # Extract command if wake word is present
+                    command = self.extract_command(transcription)
+                    return command
+                else:
+                    print("[Voice] No transcription received")
+                    return None
+                    
+            finally:
+                # Clean up temporary file
+                try:
+                    os.unlink(temp_file)
+                except OSError:
+                    pass
+                    
+        except Exception as e:
+            print(f"[Voice] Error in listen_once: {e}")
+            return None
     
     def cleanup(self):
-        """Stop and close the audio stream."""
-        try:
-            if hasattr(self, 'stream') and self.stream.active:
-                print("[Voice] Stopping audio stream...")
-                self.stream.stop()
-                self.stream.close()
-                print("[Voice] Audio stream closed")
-        except Exception as e:
-            print(f"[Voice] Error closing audio stream: {e}")
-
-    def __del__(self):
-        """Cleanup on deletion."""
-        self.cleanup()
-
-    def get_available_devices(self):
-        """Print available audio input devices for debugging."""
-        print("Available audio devices:")
-        print(sd.query_devices())
-
+        """Clean up resources."""
+        if hasattr(self, 'stream') and self.stream:
+            self.stream.stop()
+            self.stream.close()
+            print("[Voice] Audio stream closed")
